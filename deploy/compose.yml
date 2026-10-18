@@ -1,0 +1,54 @@
+name: prod
+
+services:
+  postgres:
+    image: postgres:18
+    restart: unless-stopped
+    env_file: /home/crm/personal-crm/.env
+    volumes:
+      - prod_postgres:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - internal
+
+  migrate:
+    image: ${APP_IMAGE}
+    env_file: /home/crm/personal-crm/.env
+    command: ["./node_modules/.bin/drizzle-kit", "migrate"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - internal
+
+  app:
+    image: ${APP_IMAGE}
+    restart: unless-stopped
+    env_file: /home/crm/personal-crm/.env
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - internal
+
+volumes:
+  prod_postgres:
+
+networks:
+  internal:
