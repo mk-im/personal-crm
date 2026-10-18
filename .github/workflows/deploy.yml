@@ -40,6 +40,11 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Make image public
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh api --method PATCH "/user/packages/container/personal-crm" -f visibility=public
+
       - name: Copy scripts and release
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
