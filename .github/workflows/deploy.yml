@@ -40,22 +40,31 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Make image public
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh api --method PATCH "/user/packages/container/personal-crm" -f visibility=public
-
       - name: Copy scripts and release
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
+          if [[ -z "${DEPLOY_HOST:-}" || -z "${DEPLOY_USER:-}" || -z "${DEPLOY_SSH_KEY:-}" ]]; then
+            echo "Missing DEPLOY_HOST, DEPLOY_USER or DEPLOY_SSH_KEY" >&2
+            exit 1
+          fi
           mkdir -p "$HOME/.ssh"
           install -m 600 /dev/null "$HOME/.ssh/deploy"
           printf '%s\n' "$DEPLOY_SSH_KEY" > "$HOME/.ssh/deploy"
           ssh-keyscan -H "$DEPLOY_HOST" >> "$HOME/.ssh/known_hosts"
-          ssh -i "$HOME/.ssh/deploy" -o IdentitiesOnly=yes "$DEPLOY_USER@$DEPLOY_HOST" "mkdir -p /home/crm/personal-crm/deploy"
-          scp -i "$HOME/.ssh/deploy" -o IdentitiesOnly=yes deploy/compose.yml deploy/release.sh deploy/smoke.sh deploy/prune.sh deploy/seed.sh deploy/nginx-app.conf "$DEPLOY_USER@$DEPLOY_HOST:/home/crm/personal-crm/deploy/"
-          ssh -i "$HOME/.ssh/deploy" -o IdentitiesOnly=yes "$DEPLOY_USER@$DEPLOY_HOST" "chmod +x /home/crm/personal-crm/deploy/*.sh && APP_IMAGE=$APP_IMAGE /home/crm/personal-crm/deploy/release.sh"
+          ssh -i "$HOME/.ssh/deploy" -o IdentitiesOnly=yes "$DEPLOY_USER@$DEPLOY_HOST" \
+            "mkdir -p /home/crm/personal-crm/deploy /home/crm/.docker"
+          scp -i "$HOME/.ssh/deploy" -o IdentitiesOnly=yes \
+            deploy/compose.yml deploy/release.sh deploy/smoke.sh deploy/prune.sh deploy/seed.sh deploy/nginx-app.conf \
+            "$DEPLOY_USER@$DEPLOY_HOST:/home/crm/personal-crm/deploy/"
+          printf '%s\n' "$GHCR_TOKEN" | ssh -i "$HOME/.ssh/deploy" -o IdentitiesOnly=yes "$DEPLOY_USER@$DEPLOY_HOST" \
+            "export HOME=/home/crm DOCKER_CONFIG=/home/crm/.docker; docker login ghcr.io -u $GHCR_USER --password-stdin"
+          ssh -i "$HOME/.ssh/deploy" -o IdentitiesOnly=yes "$DEPLOY_USER@$DEPLOY_HOST" \
+            "chmod +x /home/crm/personal-crm/deploy/*.sh && export HOME=/home/crm DOCKER_CONFIG=/home/crm/.docker && APP_IMAGE=$APP_IMAGE /home/crm/personal-crm/deploy/release.sh"
+          ssh -i "$HOME/.ssh/deploy" -o IdentitiesOnly=yes "$DEPLOY_USER@$DEPLOY_HOST" \
+            "export HOME=/home/crm DOCKER_CONFIG=/home/crm/.docker; docker logout ghcr.io || true"

@@ -67,6 +67,12 @@ export async function ContactCard({ params }: { params: Promise<{ id: string }> 
             className="size-13 text-ui-17 lg:size-16 lg:text-ui-20"
           />
           <h1 className="text-ui-18 font-bold lg:text-ui-22">{contact.name}</h1>
+          <Link
+            href={`/contacts/${contact.id}/edit`}
+            className="ml-auto text-ui-14 font-semibold text-label hover:text-ink"
+          >
+            Изменить
+          </Link>
         </div>
         <dl className="mt-3.5 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:mt-4.5 lg:gap-2.5">
           <Field label="Телефон" value={contact.phone} />

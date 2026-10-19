@@ -41,6 +41,48 @@ export async function createContact(
   redirect(`/contacts/${created.id}`);
 }
 
+export async function updateContact(
+  _state: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const id = Number(formData.get("id"));
+  const name = String(formData.get("name") ?? "").trim();
+
+  if (!Number.isInteger(id) || id <= 0) {
+    return { error: "Контакт не найден" };
+  }
+
+  if (!name) {
+    return { error: "Введите имя" };
+  }
+
+  const [existing] = await db
+    .select({ id: contacts.id })
+    .from(contacts)
+    .where(eq(contacts.id, id))
+    .limit(1);
+
+  if (!existing) {
+    return { error: "Контакт не найден" };
+  }
+
+  await db
+    .update(contacts)
+    .set({
+      name,
+      metThrough: optionalText(formData, "metThrough"),
+      phone: optionalText(formData, "phone"),
+      email: optionalText(formData, "email"),
+      agreement: optionalText(formData, "agreement"),
+    })
+    .where(eq(contacts.id, id));
+
+  revalidatePath("/");
+  revalidatePath(`/contacts/${id}`);
+  revalidatePath(`/contacts/${id}/edit`);
+  redirect(`/contacts/${id}`);
+}
+
 export async function addNote(_state: ActionState, formData: FormData): Promise<ActionState> {
   const contactId = Number(formData.get("contactId"));
   const body = String(formData.get("body") ?? "").trim();

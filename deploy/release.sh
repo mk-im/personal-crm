@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+export HOME=/home/crm
+export DOCKER_CONFIG=/home/crm/.docker
 ROOT="/home/crm/personal-crm"
 cd "$ROOT"
 

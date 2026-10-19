@@ -6,9 +6,18 @@ import { CtaButton } from "@/components/cta-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { createContact, type ActionState } from "@/server/contacts";
+import { createContact, updateContact, type ActionState } from "@/server/contacts";
 
 const initialState: ActionState = {};
+
+export type ContactFormValues = {
+  id: number;
+  name: string;
+  metThrough: string | null;
+  phone: string | null;
+  email: string | null;
+  agreement: string | null;
+};
 
 function Field({
   id,
@@ -37,27 +46,61 @@ function Field({
   );
 }
 
-const fieldControlClass = "h-auto border-transparent bg-transparent px-0 py-0 shadow-none focus-visible:border-transparent focus-visible:ring-0";
+const fieldControlClass =
+  "h-auto border-transparent bg-transparent px-0 py-0 shadow-none focus-visible:border-transparent focus-visible:ring-0";
 
-export function ContactForm() {
-  const [state, formAction, pending] = useActionState(createContact, initialState);
+export function ContactForm({ contact }: { contact?: ContactFormValues }) {
+  const action = contact ? updateContact : createContact;
+  const [state, formAction, pending] = useActionState(action, initialState);
 
   return (
     <form action={formAction} className="flex flex-col gap-2 rounded-r22 bg-white p-4.5 shadow-card lg:rounded-r26 lg:p-6.5 lg:shadow-card-lg">
+      {contact ? <input type="hidden" name="id" value={contact.id} /> : null}
       <Field id="name" label="Имя">
-        <Input id="name" name="name" required autoComplete="name" className={fieldControlClass} />
+        <Input
+          id="name"
+          name="name"
+          required
+          autoComplete="name"
+          defaultValue={contact?.name ?? ""}
+          className={fieldControlClass}
+        />
       </Field>
       <Field id="metThrough" label="Откуда знакомы" accent>
-        <Input id="metThrough" name="metThrough" className={fieldControlClass} />
+        <Input
+          id="metThrough"
+          name="metThrough"
+          defaultValue={contact?.metThrough ?? ""}
+          className={fieldControlClass}
+        />
       </Field>
       <Field id="phone" label="Телефон">
-        <Input id="phone" name="phone" type="tel" autoComplete="tel" className={fieldControlClass} />
+        <Input
+          id="phone"
+          name="phone"
+          type="tel"
+          autoComplete="tel"
+          defaultValue={contact?.phone ?? ""}
+          className={fieldControlClass}
+        />
       </Field>
       <Field id="email" label="Почта">
-        <Input id="email" name="email" type="email" autoComplete="email" className={fieldControlClass} />
+        <Input
+          id="email"
+          name="email"
+          type="email"
+          autoComplete="email"
+          defaultValue={contact?.email ?? ""}
+          className={fieldControlClass}
+        />
       </Field>
       <Field id="agreement" label="О чём договорились" accent>
-        <Textarea id="agreement" name="agreement" className={`${fieldControlClass} min-h-20`} />
+        <Textarea
+          id="agreement"
+          name="agreement"
+          defaultValue={contact?.agreement ?? ""}
+          className={`${fieldControlClass} min-h-20`}
+        />
       </Field>
       {state.error ? (
         <p role="alert" className="text-ui-14 text-destructive">
@@ -65,7 +108,7 @@ export function ContactForm() {
         </p>
       ) : null}
       <CtaButton type="submit" disabled={pending} icon="✓" className="mt-2 w-full">
-        {pending ? "Сохранение…" : "Сохранить"}
+        {pending ? "Сохранение…" : contact ? "Сохранить изменения" : "Сохранить"}
       </CtaButton>
     </form>
   );
