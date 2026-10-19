@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+export HOME=/home/crm
+export DOCKER_CONFIG=/home/crm/.docker
+export SEED_RESET=1
 ROOT="/home/crm/personal-crm"
 cd "$ROOT"
 
@@ -9,5 +12,6 @@ if [[ -z "${APP_IMAGE:-}" ]]; then
 fi
 
 export APP_IMAGE
-docker compose -p prod -f "$ROOT/deploy/compose.yml" --env-file "$ROOT/.env" run --rm --no-deps app \
+docker compose -p prod -f "$ROOT/deploy/compose.yml" --env-file "$ROOT/.env" run --rm --no-deps \
+  -e SEED_RESET=1 app \
   ./node_modules/.bin/tsx src/db/seed.ts
