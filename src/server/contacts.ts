@@ -110,3 +110,30 @@ export async function addNote(_state: ActionState, formData: FormData): Promise<
   revalidatePath(`/contacts/${contactId}`);
   redirect(`/contacts/${contactId}`);
 }
+
+export async function deleteContact(
+  _state: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const id = Number(formData.get("id"));
+
+  if (!Number.isInteger(id) || id <= 0) {
+    return { error: "Контакт не найден" };
+  }
+
+  const [existing] = await db
+    .select({ id: contacts.id })
+    .from(contacts)
+    .where(eq(contacts.id, id))
+    .limit(1);
+
+  if (!existing) {
+    return { error: "Контакт не найден" };
+  }
+
+  await db.delete(contacts).where(eq(contacts.id, id));
+  revalidatePath("/");
+  revalidatePath(`/contacts/${id}`);
+  revalidatePath(`/contacts/${id}/edit`);
+  redirect("/");
+}
