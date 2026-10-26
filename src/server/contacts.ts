@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 
 import { db } from "@/db";
 import { contacts, notes } from "@/db/schema";
+import { readKeepInTouchFrequency } from "@/lib/keep-in-touch";
 
 export type ActionState = {
   error?: string;
@@ -26,6 +27,12 @@ export async function createContact(
     return { error: "Введите имя" };
   }
 
+  const frequency = readKeepInTouchFrequency(formData);
+
+  if (!frequency.ok) {
+    return { error: "Выберите частоту" };
+  }
+
   const [created] = await db
     .insert(contacts)
     .values({
@@ -34,6 +41,8 @@ export async function createContact(
       phone: optionalText(formData, "phone"),
       email: optionalText(formData, "email"),
       agreement: optionalText(formData, "agreement"),
+      keepInTouchFrequency: frequency.value,
+      keepInTouchSetAt: frequency.value ? new Date() : null,
     })
     .returning({ id: contacts.id });
 
@@ -56,8 +65,17 @@ export async function updateContact(
     return { error: "Введите имя" };
   }
 
+  const frequency = readKeepInTouchFrequency(formData);
+
+  if (!frequency.ok) {
+    return { error: "Выберите частоту" };
+  }
+
   const [existing] = await db
-    .select({ id: contacts.id })
+    .select({
+      id: contacts.id,
+      keepInTouchFrequency: contacts.keepInTouchFrequency,
+    })
     .from(contacts)
     .where(eq(contacts.id, id))
     .limit(1);
@@ -65,6 +83,8 @@ export async function updateContact(
   if (!existing) {
     return { error: "Контакт не найден" };
   }
+
+  const frequencyChanged = existing.keepInTouchFrequency !== frequency.value;
 
   await db
     .update(contacts)
@@ -74,6 +94,11 @@ export async function updateContact(
       phone: optionalText(formData, "phone"),
       email: optionalText(formData, "email"),
       agreement: optionalText(formData, "agreement"),
+      ...(frequencyChanged
+        ? frequency.value
+          ? { keepInTouchFrequency: frequency.value, keepInTouchSetAt: new Date() }
+          : { keepInTouchFrequency: null, keepInTouchSetAt: null }
+        : {}),
     })
     .where(eq(contacts.id, id));
 

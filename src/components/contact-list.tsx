@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { Avatar } from "@/components/avatar";
 import { CtaLink } from "@/components/cta-link";
+import { DueContacts } from "@/components/due-contacts";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -72,6 +73,8 @@ export async function ContactList({
           ) : null}
         </div>
       </form>
+
+      {query ? null : <DueContacts />}
 
       {contacts.length === 0 ? (
         <p className="rounded-r22 bg-white px-4 py-10 text-center text-muted shadow-card lg:rounded-r26 lg:shadow-card-lg">

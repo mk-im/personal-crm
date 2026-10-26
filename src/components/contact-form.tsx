@@ -6,6 +6,8 @@ import { CtaButton } from "@/components/cta-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import type { KeepInTouchFrequency } from "@/db/schema";
+import { KEEP_IN_TOUCH_FIELD_LABEL, KEEP_IN_TOUCH_OPTIONS } from "@/lib/keep-in-touch";
 import { createContact, updateContact, type ActionState } from "@/server/contacts";
 
 const initialState: ActionState = {};
@@ -17,6 +19,7 @@ export type ContactFormValues = {
   phone: string | null;
   email: string | null;
   agreement: string | null;
+  keepInTouchFrequency: KeepInTouchFrequency | null;
 };
 
 function Field({
@@ -101,6 +104,21 @@ export function ContactForm({ contact }: { contact?: ContactFormValues }) {
           defaultValue={contact?.agreement ?? ""}
           className={`${fieldControlClass} min-h-20`}
         />
+      </Field>
+      <Field id="keepInTouchFrequency" label={KEEP_IN_TOUCH_FIELD_LABEL}>
+        <select
+          id="keepInTouchFrequency"
+          name="keepInTouchFrequency"
+          defaultValue={contact?.keepInTouchFrequency ?? ""}
+          className={`${fieldControlClass} w-full cursor-pointer bg-transparent text-ui-14 font-semibold lg:text-ui-16`}
+        >
+          <option value="">Не задано</option>
+          {KEEP_IN_TOUCH_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
       </Field>
       {state.error ? (
         <p role="alert" className="text-ui-14 text-destructive">

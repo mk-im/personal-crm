@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>keep-in-touch — компьютер</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --color-blue-1: #1454fc;
+    --color-blue-2: #0432df;
+    --color-blue-3: #5b9bf5;
+    --color-blue-deep: #0a2bc0;
+    --color-sky: #afd1f5;
+    --color-mist: #e4effb;
+    --color-note: #eaf1ff;
+    --color-note-line: #c9dafe;
+    --color-ink: #0b1220;
+    --color-muted: #5a6785;
+    --color-label: #6b7893;
+    --color-line: #d3dff2;
+    --color-divider: #e6ecf7;
+    --color-white: #ffffff;
+    --color-black: #000000;
+    --font-sans: "Manrope", sans-serif;
+    --shadow-card: 0 20px 44px rgb(4 50 223 / 0.1);
+    --gradient-brand:
+      radial-gradient(120% 60% at 50% 0%, var(--color-blue-3) 0%, transparent 60%),
+      linear-gradient(180deg, var(--color-blue-1) 0%, var(--color-blue-2) 70%, var(--color-blue-deep) 100%);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #cfd8ea; font-family: var(--font-sans); color: var(--color-ink); }
+  .board { padding: 48px 0 80px; }
+  .caption { width: 1440px; margin: 0 auto 12px; padding: 0 40px; font-size: 14px; font-weight: 600; color: #4a5878; }
+  .page { width: 1440px; margin: 0 auto 56px; background: var(--color-mist); overflow: hidden; }
+  header.app {
+    background: var(--gradient-brand); color: #fff;
+    padding: 28px 40px;
+  }
+  .header-inner { max-width: 768px; margin: 0 auto; }
+  .logo {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 12px 24px; border-radius: 999px;
+    background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.28);
+    backdrop-filter: blur(10px); font-weight: 600; font-size: 16px;
+  }
+  .logo i { width: 22px; height: 22px; border-radius: 7px; background: #fff; display: block; position: relative; }
+  .logo i::after { content: ""; position: absolute; inset: 6px; border-radius: 50%; background: var(--color-blue-1); }
+  main { max-width: 768px; margin: 0 auto; padding: 40px 40px 48px; display: flex; flex-direction: column; gap: 24px; }
+  .title-row { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+  h1 { font-size: 42px; font-weight: 500; line-height: 1.18; letter-spacing: -0.025em; }
+  h1.card-name { font-size: 22px; font-weight: 700; letter-spacing: 0; line-height: 1.2; }
+  h1.form-title { font-size: 42px; }
+  .sub { margin-top: 4px; font-size: 16px; color: var(--color-muted); }
+  .cta {
+    display: inline-flex; align-items: center; justify-content: space-between; gap: 16px;
+    background: var(--color-black); color: #fff; text-decoration: none;
+    font-weight: 600; font-size: 18px; padding: 8px 8px 8px 28px; border-radius: 16px; flex-shrink: 0;
+  }
+  .cta span { width: 50px; height: 50px; border-radius: 12px; background: #fff; color: #000; display: grid; place-items: center; font-size: 20px; }
+  .search {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--color-white); border-radius: 26px; padding: 16px; box-shadow: var(--shadow-card);
+  }
+  .search input {
+    flex: 1; border: 0; background: var(--color-mist); border-radius: 14px;
+    padding: 14px 16px; font: 16px var(--font-sans); color: var(--color-ink);
+  }
+  .btn { height: 48px; padding: 0 20px; border: 0; border-radius: 14px; background: var(--color-black); color: #fff; font: 600 16px var(--font-sans); }
+  .btn.ghost { background: transparent; color: var(--color-ink); }
+  .card { background: var(--color-white); border-radius: 26px; box-shadow: var(--shadow-card); overflow: hidden; }
+  .card-pad { padding: 26px; }
+  .due-title { padding: 18px 20px 10px; font-size: 18px; font-weight: 600; }
+  .row { display: flex; align-items: center; gap: 14px; padding: 14px 20px; border-top: 1px solid var(--color-divider); }
+  .av { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 15px; color: #fff; flex: none; }
+  .av.b1 { background: var(--color-blue-1); }
+  .av.b2 { background: var(--color-blue-2); }
+  .av.b3 { background: var(--color-blue-3); }
+  .av.sky { background: var(--color-sky); color: var(--color-blue-2); }
+  .n { font-weight: 700; font-size: 17px; }
+  .m { font-size: 14px; color: var(--color-label); margin-top: 2px; }
+  .m b { color: var(--color-blue-1); font-weight: 600; }
+  .back { font-size: 14px; font-weight: 600; color: var(--color-label); }
+  .head { display: flex; align-items: center; gap: 16px; padding-bottom: 18px; border-bottom: 1px solid var(--color-divider); }
+  .links { display: flex; gap: 16px; margin-left: auto; flex-shrink: 0; }
+  .links a { font-size: 14px; font-weight: 600; color: var(--color-label); text-decoration: none; }
+  .del { color: #dc2626; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 18px; }
+  .wide { grid-column: 1 / -1; }
+  .well { background: var(--color-mist); border-radius: 16px; padding: 14px 16px; }
+  .well.accent { background: var(--color-note); border: 1px solid var(--color-note-line); }
+  .well .k { font-size: 12px; font-weight: 500; color: var(--color-muted); margin-bottom: 4px; }
+  .well.accent .k { color: var(--color-blue-1); }
+  .well .v { font-size: 16px; font-weight: 600; }
+  h2 { font-size: 18px; font-weight: 600; }
+  .note-form { background: var(--color-white); border-radius: 26px; padding: 26px; box-shadow: var(--shadow-card); }
+  .note-well { background: var(--color-mist); border-radius: 16px; padding: 14px 16px; margin-bottom: 16px; min-height: 80px; color: var(--color-label); font-size: 16px; }
+  .note-item { background: var(--color-mist); border-radius: 16px; padding: 14px 16px; }
+  .note-item b { display: block; font-size: 12px; color: var(--color-blue-1); margin-bottom: 4px; }
+  .note-item p { font-size: 15px; line-height: 1.4; }
+  .note-item .t { margin-top: 8px; font-size: 14px; color: var(--color-label); }
+  .form { background: var(--color-white); border-radius: 26px; padding: 26px; box-shadow: var(--shadow-card); display: flex; flex-direction: column; gap: 10px; }
+  .form input, .form select {
+    width: 100%; border: 0; background: transparent; font: 600 16px var(--font-sans); color: var(--color-ink);
+    outline: none;
+  }
+</style>
+</head>
+<body>
+<div class="board">
+
+<p class="caption">1 · Главная — есть кому написать</p>
+<div class="page">
+  <header class="app"><div class="header-inner"><span class="logo"><i></i>Личная CRM</span></div></header>
+  <main>
+    <div class="title-row">
+      <div>
+        <h1>Контакты</h1>
+        <p class="sub">Всего 1 000 контактов</p>
+      </div>
+      <a class="cta" href="#">Добавить контакт<span>+</span></a>
+    </div>
+    <form class="search">
+      <input placeholder="Найти по имени" value="">
+      <button class="btn" type="button">Найти</button>
+    </form>
+    <section class="card" aria-label="Пора связаться">
+      <div class="due-title">Пора связаться</div>
+      <div class="row"><div class="av b1">МК</div><div><div class="n">Мария Кузнецова</div><div class="m">Раз в год · <b>на 35 дней</b></div></div></div>
+      <div class="row"><div class="av b2">ИП</div><div><div class="n">Иван Петров</div><div class="m">Раз в неделю · <b>на 13 дней</b></div></div></div>
+      <div class="row"><div class="av b3">ОЛ</div><div><div class="n">Ольга Лебедева</div><div class="m">Раз в квартал · <b>на 8 дней</b></div></div></div>
+      <div class="row"><div class="av sky">ПС</div><div><div class="n">Пётр Соколов</div><div class="m">Раз в месяц · <b>на 6 дней</b></div></div></div>
+      <div class="row"><div class="av b1">АМ</div><div><div class="n">Анна Морозова</div><div class="m">Раз в неделю · <b>на 2 дня</b></div></div></div>
+    </section>
+    <ul class="card">
+      <li class="row" style="border-top:0"><div class="av b2">АЗ</div><div><div class="n">Алексей Зайцев</div><div class="m">университет</div></div></li>
+      <li class="row"><div class="av b3">АС</div><div><div class="n">Анна Смирнова</div><div class="m">работа</div></div></li>
+      <li class="row"><div class="av sky">ВК</div><div><div class="n">Вера Козлова</div><div class="m">соседи</div></div></li>
+    </ul>
+  </main>
+</div>
+
+<p class="caption">2 · Главная — поиск, блока нет</p>
+<div class="page">
+  <header class="app"><div class="header-inner"><span class="logo"><i></i>Личная CRM</span></div></header>
+  <main>
+    <div class="title-row">
+      <div>
+        <h1>Контакты</h1>
+        <p class="sub">Нашли 2 контакта</p>
+      </div>
+      <a class="cta" href="#">Добавить контакт<span>+</span></a>
+    </div>
+    <form class="search">
+      <input value="Анна">
+      <button class="btn" type="button">Найти</button>
+      <button class="btn ghost" type="button">Показать всех</button>
+    </form>
+    <ul class="card">
+      <li class="row" style="border-top:0"><div class="av b1">АМ</div><div><div class="n">Анна Морозова</div><div class="m">митап</div></div></li>
+      <li class="row"><div class="av b3">АС</div><div><div class="n">Анна Смирнова</div><div class="m">работа</div></div></li>
+    </ul>
+  </main>
+</div>
+
+<p class="caption">3 · Карточка — частота задана</p>
+<div class="page">
+  <header class="app"><div class="header-inner"><span class="logo"><i></i>Личная CRM</span></div></header>
+  <main>
+    <a class="back" href="#">← К списку</a>
+    <section class="card card-pad">
+      <div class="head">
+        <div class="av b3" style="width:64px;height:64px;font-size:20px">АС</div>
+        <h1 class="card-name">Анна Смирнова</h1>
+        <div class="links"><a href="#">Изменить</a><a class="del" href="#">Удалить</a></div>
+      </div>
+      <dl class="grid">
+        <div class="well"><div class="k">Телефон</div><div class="v">+7 900 123-45-67</div></div>
+        <div class="well"><div class="k">Почта</div><div class="v">anna@example.ru</div></div>
+        <div class="well accent wide"><div class="k">Откуда знакомы</div><div class="v">работа</div></div>
+        <div class="well accent wide"><div class="k">О чём договорились</div><div class="v">Созвониться в пятницу</div></div>
+        <div class="well wide"><div class="k">Как часто общаться</div><div class="v">Раз в месяц</div></div>
+      </dl>
+    </section>
+    <h2>Заметки</h2>
+    <div class="note-form">
+      <div class="note-well">Заметка после разговора</div>
+      <a class="cta" href="#" style="width:100%">Добавить заметку<span>✓</span></a>
+    </div>
+    <div class="note-item">
+      <b>Заметка</b>
+      <p>Поговорили про переезд. Анна пришлёт список вещей.</p>
+      <div class="t">3 авг. 2026 г., 19:10</div>
+    </div>
+  </main>
+</div>
+
+<p class="caption">4 · Изменить — задать или убрать частоту</p>
+<div class="page">
+  <header class="app"><div class="header-inner"><span class="logo"><i></i>Личная CRM</span></div></header>
+  <main>
+    <a class="back" href="#">← К карточке</a>
+    <h1 class="form-title">Изменить контакт</h1>
+    <form class="form">
+      <div class="well"><div class="k">Имя</div><input value="Анна Смирнова"></div>
+      <div class="well accent"><div class="k">Откуда знакомы</div><input value="работа"></div>
+      <div class="well"><div class="k">Телефон</div><input value="+7 900 123-45-67"></div>
+      <div class="well"><div class="k">Почта</div><input value="anna@example.ru"></div>
+      <div class="well accent"><div class="k">О чём договорились</div><input value="Созвониться в пятницу"></div>
+      <div class="well"><div class="k">Как часто общаться</div>
+        <select>
+          <option>Не задано</option>
+          <option>Раз в неделю</option>
+          <option selected>Раз в месяц</option>
+          <option>Раз в квартал</option>
+          <option>Раз в год</option>
+        </select>
+      </div>
+      <a class="cta" href="#" style="margin-top:8px;width:100%">Сохранить изменения<span>✓</span></a>
+    </form>
+  </main>
+</div>
+
+<p class="caption">5 · Карточка — частота не задана</p>
+<div class="page">
+  <header class="app"><div class="header-inner"><span class="logo"><i></i>Личная CRM</span></div></header>
+  <main>
+    <a class="back" href="#">← К списку</a>
+    <section class="card card-pad">
+      <div class="head">
+        <div class="av b2" style="width:64px;height:64px;font-size:20px">АЗ</div>
+        <h1 class="card-name">Алексей Зайцев</h1>
+        <div class="links"><a href="#">Изменить</a><a class="del" href="#">Удалить</a></div>
+      </div>
+      <dl class="grid">
+        <div class="well"><div class="k">Телефон</div><div class="v">+7 940 100-07-40</div></div>
+        <div class="well"><div class="k">Почта</div><div class="v">не указано</div></div>
+        <div class="well accent wide"><div class="k">Откуда знакомы</div><div class="v">университет</div></div>
+        <div class="well accent wide"><div class="k">О чём договорились</div><div class="v">не указано</div></div>
+        <div class="well wide"><div class="k">Как часто общаться</div><div class="v">не указано</div></div>
+      </dl>
+    </section>
+  </main>
+</div>
+
+</div>
+</body>
+</html>

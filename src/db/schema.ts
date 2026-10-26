@@ -1,5 +1,8 @@
 import { index, integer, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
 
+export const keepInTouchFrequencies = ["weekly", "monthly", "quarterly", "yearly"] as const;
+export type KeepInTouchFrequency = (typeof keepInTouchFrequencies)[number];
+
 export const contacts = pgTable(
   "contacts",
   {
@@ -9,6 +12,8 @@ export const contacts = pgTable(
     phone: text("phone"),
     email: text("email"),
     agreement: text("agreement"),
+    keepInTouchFrequency: text("keep_in_touch_frequency").$type<KeepInTouchFrequency>(),
+    keepInTouchSetAt: timestamp("keep_in_touch_set_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [index("contacts_name_idx").on(table.name)],
