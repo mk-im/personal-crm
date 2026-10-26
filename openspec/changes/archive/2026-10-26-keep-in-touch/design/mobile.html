@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>keep-in-touch — телефон</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --color-blue-1: #1454fc;
+    --color-blue-2: #0432df;
+    --color-blue-3: #5b9bf5;
+    --color-blue-deep: #0a2bc0;
+    --color-sky: #afd1f5;
+    --color-mist: #e4effb;
+    --color-note: #eaf1ff;
+    --color-note-line: #c9dafe;
+    --color-ink: #0b1220;
+    --color-muted: #5a6785;
+    --color-label: #6b7893;
+    --color-line: #d3dff2;
+    --color-divider: #e6ecf7;
+    --color-white: #ffffff;
+    --color-black: #000000;
+    --font-sans: "Manrope", sans-serif;
+    --shadow-card: 0 16px 36px rgb(4 50 223 / 0.1);
+    --gradient-brand:
+      radial-gradient(120% 60% at 50% 0%, var(--color-blue-3) 0%, transparent 60%),
+      linear-gradient(180deg, var(--color-blue-1) 0%, var(--color-blue-2) 70%, var(--color-blue-deep) 100%);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #cfd8ea; font-family: var(--font-sans); color: var(--color-ink); }
+  .board { padding: 40px 16px 80px; }
+  .caption { width: 390px; margin: 0 auto 10px; font-size: 13px; font-weight: 600; color: #4a5878; }
+  .page { width: 390px; margin: 0 auto 48px; background: var(--color-mist); overflow: hidden; }
+  header.app {
+    background: var(--gradient-brand); color: #fff;
+    padding: 20px;
+  }
+  .logo {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 20px; border-radius: 999px;
+    background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.28);
+    backdrop-filter: blur(10px); font-weight: 600; font-size: 14px;
+  }
+  .logo i { width: 18px; height: 18px; border-radius: 6px; background: #fff; display: block; position: relative; }
+  .logo i::after { content: ""; position: absolute; inset: 5px; border-radius: 50%; background: var(--color-blue-1); }
+  main { padding: 24px 20px 32px; display: flex; flex-direction: column; gap: 24px; }
+  h1 { font-size: 25px; font-weight: 500; line-height: 1.28; letter-spacing: -0.02em; }
+  .sub { margin-top: 4px; font-size: 14px; color: var(--color-muted); }
+  .cta {
+    display: flex; align-items: center; justify-content: space-between; gap: 14px;
+    background: var(--color-black); color: #fff; text-decoration: none;
+    font-weight: 600; font-size: 16px; padding: 6px 6px 6px 24px; border-radius: 14px;
+  }
+  .cta span { width: 42px; height: 42px; border-radius: 10px; background: #fff; color: #000; display: grid; place-items: center; font-size: 18px; }
+  .search {
+    display: flex; flex-direction: column; gap: 8px;
+    background: var(--color-white); border-radius: 22px; padding: 12px; box-shadow: var(--shadow-card);
+  }
+  .search input {
+    width: 100%; border: 0; background: var(--color-mist); border-radius: 14px;
+    padding: 12px 16px; font: 16px var(--font-sans); color: var(--color-ink);
+  }
+  .btn { height: 44px; border: 0; border-radius: 14px; background: var(--color-black); color: #fff; font: 600 16px var(--font-sans); }
+  .btn.ghost { background: transparent; color: var(--color-ink); }
+  .actions { display: flex; gap: 8px; }
+  .actions .btn { flex: 1; }
+  .card { background: var(--color-white); border-radius: 22px; box-shadow: var(--shadow-card); overflow: hidden; }
+  .card-pad { padding: 18px; }
+  .due-title { padding: 14px 16px 8px; font-size: 18px; font-weight: 600; }
+  .row { display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-top: 1px solid var(--color-divider); }
+  .av { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 14px; color: #fff; flex: none; }
+  .av.b1 { background: var(--color-blue-1); }
+  .av.b2 { background: var(--color-blue-2); }
+  .av.b3 { background: var(--color-blue-3); }
+  .av.sky { background: var(--color-sky); color: var(--color-blue-2); }
+  .n { font-weight: 700; font-size: 15px; }
+  .m { font-size: 12px; color: var(--color-label); margin-top: 2px; }
+  .m b { color: var(--color-blue-1); font-weight: 600; }
+  .back { font-size: 14px; font-weight: 600; color: var(--color-label); }
+  .head { display: flex; align-items: center; gap: 12px; padding-bottom: 14px; border-bottom: 1px solid var(--color-divider); }
+  .head h1 { font-size: 18px; font-weight: 700; letter-spacing: 0; flex: 1; min-width: 0; }
+  .links { display: flex; gap: 12px; flex-shrink: 0; }
+  .links a { font-size: 14px; font-weight: 600; color: var(--color-label); text-decoration: none; }
+  .del { color: #dc2626; }
+  .grid { display: grid; gap: 8px; margin-top: 14px; }
+  .well { background: var(--color-mist); border-radius: 14px; padding: 10px 12px; }
+  .well.accent { background: var(--color-note); border: 1px solid var(--color-note-line); }
+  .well .k { font-size: 11px; font-weight: 500; color: var(--color-muted); margin-bottom: 3px; }
+  .well.accent .k { color: var(--color-blue-1); }
+  .well .v { font-size: 14px; font-weight: 600; }
+  h2 { font-size: 18px; font-weight: 600; }
+  .note-form { background: var(--color-white); border-radius: 22px; padding: 18px; box-shadow: var(--shadow-card); }
+  .note-well { background: var(--color-mist); border-radius: 14px; padding: 10px 12px; margin-bottom: 12px; min-height: 72px; color: var(--color-label); font-size: 14px; }
+  .note-item { background: var(--color-mist); border-radius: 14px; padding: 12px 14px; }
+  .note-item b { display: block; font-size: 11px; color: var(--color-blue-1); margin-bottom: 4px; }
+  .note-item p { font-size: 13px; line-height: 1.4; }
+  .note-item .t { margin-top: 8px; font-size: 12px; color: var(--color-label); }
+  .form { background: var(--color-white); border-radius: 22px; padding: 18px; box-shadow: var(--shadow-card); display: flex; flex-direction: column; gap: 8px; }
+  .form input, .form select {
+    width: 100%; border: 0; background: transparent; font: 600 14px var(--font-sans); color: var(--color-ink);
+    outline: none;
+  }
+  .form select { appearance: none; }
+</style>
+</head>
+<body>
+<div class="board">
+
+<p class="caption">1 · Главная — есть кому написать</p>
+<div class="page">
+  <header class="app"><span class="logo"><i></i>Личная CRM</span></header>
+  <main>
+    <div>
+      <h1>Контакты</h1>
+      <p class="sub">Всего 1 000 контактов</p>
+    </div>
+    <a class="cta" href="#">Добавить контакт<span>+</span></a>
+    <form class="search">
+      <input placeholder="Найти по имени" value="">
+      <button class="btn" type="button">Найти</button>
+    </form>
+    <section class="card" aria-label="Пора связаться">
+      <div class="due-title">Пора связаться</div>
+      <div class="row"><div class="av b1">МК</div><div><div class="n">Мария Кузнецова</div><div class="m">Раз в год · <b>на 35 дней</b></div></div></div>
+      <div class="row"><div class="av b2">ИП</div><div><div class="n">Иван Петров</div><div class="m">Раз в неделю · <b>на 13 дней</b></div></div></div>
+      <div class="row"><div class="av b3">ОЛ</div><div><div class="n">Ольга Лебедева</div><div class="m">Раз в квартал · <b>на 8 дней</b></div></div></div>
+      <div class="row"><div class="av sky">ПС</div><div><div class="n">Пётр Соколов</div><div class="m">Раз в месяц · <b>на 6 дней</b></div></div></div>
+      <div class="row"><div class="av b1">АМ</div><div><div class="n">Анна Морозова</div><div class="m">Раз в неделю · <b>на 2 дня</b></div></div></div>
+    </section>
+    <ul class="card">
+      <li class="row" style="border-top:0"><div class="av b2">АЗ</div><div><div class="n">Алексей Зайцев</div><div class="m">университет</div></div></li>
+      <li class="row"><div class="av b3">АС</div><div><div class="n">Анна Смирнова</div><div class="m">работа</div></div></li>
+      <li class="row"><div class="av sky">ВК</div><div><div class="n">Вера Козлова</div><div class="m">соседи</div></div></li>
+    </ul>
+  </main>
+</div>
+
+<p class="caption">2 · Главная — поиск, блока нет</p>
+<div class="page">
+  <header class="app"><span class="logo"><i></i>Личная CRM</span></header>
+  <main>
+    <div>
+      <h1>Контакты</h1>
+      <p class="sub">Нашли 2 контакта</p>
+    </div>
+    <a class="cta" href="#">Добавить контакт<span>+</span></a>
+    <form class="search">
+      <input value="Анна">
+      <div class="actions">
+        <button class="btn" type="button">Найти</button>
+        <button class="btn ghost" type="button">Показать всех</button>
+      </div>
+    </form>
+    <ul class="card">
+      <li class="row" style="border-top:0"><div class="av b1">АМ</div><div><div class="n">Анна Морозова</div><div class="m">митап</div></div></li>
+      <li class="row"><div class="av b3">АС</div><div><div class="n">Анна Смирнова</div><div class="m">работа</div></div></li>
+    </ul>
+  </main>
+</div>
+
+<p class="caption">3 · Карточка — частота задана</p>
+<div class="page">
+  <header class="app"><span class="logo"><i></i>Личная CRM</span></header>
+  <main>
+    <a class="back" href="#">← К списку</a>
+    <section class="card card-pad">
+      <div class="head">
+        <div class="av b3" style="width:52px;height:52px;font-size:17px">АС</div>
+        <h1>Анна Смирнова</h1>
+        <div class="links"><a href="#">Изменить</a><a class="del" href="#">Удалить</a></div>
+      </div>
+      <dl class="grid">
+        <div class="well"><div class="k">Телефон</div><div class="v">+7 900 123-45-67</div></div>
+        <div class="well"><div class="k">Почта</div><div class="v">anna@example.ru</div></div>
+        <div class="well accent"><div class="k">Откуда знакомы</div><div class="v">работа</div></div>
+        <div class="well accent"><div class="k">О чём договорились</div><div class="v">Созвониться в пятницу</div></div>
+        <div class="well"><div class="k">Как часто общаться</div><div class="v">Раз в месяц</div></div>
+      </dl>
+    </section>
+    <h2>Заметки</h2>
+    <div class="note-form">
+      <div class="note-well">Заметка после разговора</div>
+      <a class="cta" href="#">Добавить заметку<span>✓</span></a>
+    </div>
+    <div class="note-item">
+      <b>Заметка</b>
+      <p>Поговорили про переезд. Анна пришлёт список вещей.</p>
+      <div class="t">3 авг. 2026 г., 19:10</div>
+    </div>
+  </main>
+</div>
+
+<p class="caption">4 · Изменить — задать или убрать частоту</p>
+<div class="page">
+  <header class="app"><span class="logo"><i></i>Личная CRM</span></header>
+  <main>
+    <a class="back" href="#">← К карточке</a>
+    <h1>Изменить контакт</h1>
+    <form class="form">
+      <div class="well"><div class="k">Имя</div><input value="Анна Смирнова"></div>
+      <div class="well accent"><div class="k">Откуда знакомы</div><input value="работа"></div>
+      <div class="well"><div class="k">Телефон</div><input value="+7 900 123-45-67"></div>
+      <div class="well"><div class="k">Почта</div><input value="anna@example.ru"></div>
+      <div class="well accent"><div class="k">О чём договорились</div><input value="Созвониться в пятницу"></div>
+      <div class="well"><div class="k">Как часто общаться</div>
+        <select>
+          <option>Не задано</option>
+          <option>Раз в неделю</option>
+          <option selected>Раз в месяц</option>
+          <option>Раз в квартал</option>
+          <option>Раз в год</option>
+        </select>
+      </div>
+      <a class="cta" href="#" style="margin-top:8px">Сохранить изменения<span>✓</span></a>
+    </form>
+  </main>
+</div>
+
+<p class="caption">5 · Карточка — частота не задана</p>
+<div class="page">
+  <header class="app"><span class="logo"><i></i>Личная CRM</span></header>
+  <main>
+    <a class="back" href="#">← К списку</a>
+    <section class="card card-pad">
+      <div class="head">
+        <div class="av b2" style="width:52px;height:52px;font-size:17px">АЗ</div>
+        <h1>Алексей Зайцев</h1>
+        <div class="links"><a href="#">Изменить</a><a class="del" href="#">Удалить</a></div>
+      </div>
+      <dl class="grid">
+        <div class="well"><div class="k">Телефон</div><div class="v">+7 940 100-07-40</div></div>
+        <div class="well"><div class="k">Почта</div><div class="v">не указано</div></div>
+        <div class="well accent"><div class="k">Откуда знакомы</div><div class="v">университет</div></div>
+        <div class="well accent"><div class="k">О чём договорились</div><div class="v">не указано</div></div>
+        <div class="well"><div class="k">Как часто общаться</div><div class="v">не указано</div></div>
+      </dl>
+    </section>
+  </main>
+</div>
+
+</div>
+</body>
+</html>

@@ -8,6 +8,13 @@
       "when": 1791667236902,
       "tag": "0000_broad_hellfire_club",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793033930561,
+      "tag": "0001_chubby_callisto",
+      "breakpoints": true
     }
   ]
 }

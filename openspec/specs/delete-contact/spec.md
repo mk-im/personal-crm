@@ -1,29 +1,29 @@
 # Delete contact
 
-Remove a person from the CRM so they no longer appear in the list.
+Убрать человека из CRM, чтобы он больше не появлялся в списке.
 
 ## Requirements
 
 ### Requirement: Delete from the contact card
 
-The system SHALL let the user delete a contact from that contact's card.
+The system SHALL позволять удалить контакт с карточки этого контакта.
 
 #### Scenario: Delete a contact
 
-- **WHEN** the user opens a contact card and confirms deletion
-- **THEN** the contact is removed from the list
-- **AND** the contact card is no longer available
+- **WHEN** пользователь открыл карточку контакта и подтвердил удаление
+- **THEN** контакта нет в списке
+- **AND** карточка этого контакта больше не открывается
 
 #### Scenario: Notes are removed with the contact
 
-- **WHEN** the user deletes a contact that has notes
-- **THEN** those notes are also removed
+- **WHEN** пользователь удаляет контакт, у которого были заметки
+- **THEN** заметки этого контакта тоже удаляются
 
 ### Requirement: Confirm before delete
 
-The system SHALL ask the user to confirm before deleting a contact.
+The system SHALL спрашивать подтверждение, прежде чем удалить контакт.
 
 #### Scenario: Cancel keeps the contact
 
-- **WHEN** the user starts deletion but does not confirm
-- **THEN** the contact and notes stay as they were
+- **WHEN** пользователь начал удаление, но не подтвердил
+- **THEN** контакт и заметки остаются как были

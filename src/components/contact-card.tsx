@@ -6,6 +6,7 @@ import { DeleteContactButton } from "@/components/delete-contact-button";
 import { NoteForm } from "@/components/note-form";
 import { getContact } from "@/db/queries";
 import { avatarTone, contactInitials } from "@/lib/contact-style";
+import { KEEP_IN_TOUCH_FIELD_LABEL, KEEP_IN_TOUCH_LABELS } from "@/lib/keep-in-touch";
 
 const dateFormat = new Intl.DateTimeFormat("ru-RU", {
   dateStyle: "medium",
@@ -83,6 +84,9 @@ export async function ContactCard({ params }: { params: Promise<{ id: string }> 
           <Field label="Почта" value={contact.email} />
           <Field label="Откуда знакомы" value={contact.metThrough} wide />
           <Field label="О чём договорились" value={contact.agreement} wide />
+          {contact.keepInTouchFrequency ? (
+            <Field label={KEEP_IN_TOUCH_FIELD_LABEL} value={KEEP_IN_TOUCH_LABELS[contact.keepInTouchFrequency]} />
+          ) : null}
         </dl>
       </section>
 
