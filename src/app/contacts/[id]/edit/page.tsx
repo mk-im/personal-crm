@@ -3,7 +3,28 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
 import { ContactForm } from "@/components/contact-form";
+import { RefreshOnMount } from "@/components/refresh-on-mount";
 import { getContact } from "@/db/queries";
+
+function contactFormKey(contact: {
+  id: number;
+  name: string;
+  metThrough: string | null;
+  phone: string | null;
+  email: string | null;
+  agreement: string | null;
+  keepInTouchFrequency: string | null;
+}) {
+  return [
+    contact.id,
+    contact.name,
+    contact.metThrough ?? "",
+    contact.phone ?? "",
+    contact.email ?? "",
+    contact.agreement ?? "",
+    contact.keepInTouchFrequency ?? "",
+  ].join("|");
+}
 
 async function EditContact({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -28,7 +49,8 @@ async function EditContact({ params }: { params: Promise<{ id: string }> }) {
         ← К карточке
       </Link>
       <h1 className="text-lead font-medium lg:text-lead-lg">Изменить контакт</h1>
-      <ContactForm contact={result.contact} />
+      <RefreshOnMount />
+      <ContactForm key={contactFormKey(result.contact)} contact={result.contact} />
     </div>
   );
 }

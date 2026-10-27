@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { Avatar } from "@/components/avatar";
 import { DeleteContactButton } from "@/components/delete-contact-button";
 import { NoteForm } from "@/components/note-form";
+import { RefreshOnMount } from "@/components/refresh-on-mount";
 import { getContact } from "@/db/queries";
 import { avatarTone, contactInitials } from "@/lib/contact-style";
 import { KEEP_IN_TOUCH_FIELD_LABEL, KEEP_IN_TOUCH_LABELS } from "@/lib/keep-in-touch";
@@ -57,6 +58,7 @@ export async function ContactCard({ params }: { params: Promise<{ id: string }> 
 
   return (
     <div className="flex flex-col gap-6">
+      <RefreshOnMount />
       <Link href="/" className="w-fit text-ui-14 font-semibold text-label hover:text-ink">
         ← К списку
       </Link>
@@ -72,6 +74,7 @@ export async function ContactCard({ params }: { params: Promise<{ id: string }> 
           <div className="ml-auto flex shrink-0 items-center gap-3">
             <Link
               href={`/contacts/${contact.id}/edit`}
+              prefetch={false}
               className="text-ui-14 font-semibold text-label hover:text-ink"
             >
               Изменить
