@@ -135,12 +135,6 @@ function phone(index: number) {
 }
 
 async function seed() {
-  if (process.env.SEED_RESET === "1") {
-    await db.delete(notes);
-    await db.delete(contacts);
-    console.log("Cleared contacts and notes");
-  }
-
   const [{ value }] = await db.select({ value: count() }).from(contacts);
 
   if (value > 0) {
