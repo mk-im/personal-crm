@@ -310,3 +310,9 @@ describe("groups page and header", () => {
     expect(groupDeleteSubmission(false, tennis.id)).toBeNull();
   });
 });
+
+describe("branch protection check", () => {
+  it("fails on purpose so a red PR cannot merge", () => {
+    expect(true).toBe(false);
+  });
+});
