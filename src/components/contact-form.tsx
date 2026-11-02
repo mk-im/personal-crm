@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState, type ReactNode } from "react";
+import { useActionState, type ReactNode } from "react";
 
 import Link from "next/link";
 
@@ -57,68 +57,21 @@ const fieldControlClass =
   "h-auto border-transparent bg-transparent px-0 py-0 shadow-none focus-visible:border-transparent focus-visible:ring-0";
 
 function FrequencyField({ defaultValue }: { defaultValue: string }) {
-  const [value, setValue] = useState(defaultValue);
-  const [open, setOpen] = useState(false);
-  const selected = KEEP_IN_TOUCH_OPTIONS.find((option) => option.value === value);
-  const label = selected?.label ?? "Не задано";
-
-  function choose(next: string) {
-    setValue(next);
-    setOpen(false);
-  }
-
   return (
     <Field id="keepInTouchFrequency" label={KEEP_IN_TOUCH_FIELD_LABEL}>
-      <input type="hidden" name="keepInTouchFrequency" value={value} />
-      <button
-        type="button"
+      <select
         id="keepInTouchFrequency"
-        aria-expanded={open}
-        aria-haspopup="listbox"
-        aria-controls="keepInTouchFrequency-list"
-        onClick={() => setOpen((current) => !current)}
-        className="flex w-full cursor-pointer items-center justify-between bg-transparent py-0.5 text-left text-body font-semibold text-ink"
+        name="keepInTouchFrequency"
+        defaultValue={defaultValue}
+        className="w-full cursor-pointer bg-transparent py-0.5 text-body font-semibold text-ink outline-none"
       >
-        <span>{label}</span>
-        <span className="text-label" aria-hidden>
-          {open ? "▴" : "▾"}
-        </span>
-      </button>
-      {open ? (
-        <ul
-          id="keepInTouchFrequency-list"
-          role="listbox"
-          aria-label={KEEP_IN_TOUCH_FIELD_LABEL}
-          className="mt-2 flex flex-col border-t border-divider pt-1"
-        >
-          <li>
-            <button
-              type="button"
-              role="option"
-              aria-selected={value === ""}
-              onClick={() => choose("")}
-              className={`w-full cursor-pointer py-2 text-left text-body font-semibold ${value === "" ? "text-blue-1" : "text-ink"}`}
-            >
-              Не задано
-            </button>
-          </li>
-          {KEEP_IN_TOUCH_OPTIONS.map((option) => (
-            <li key={option.value}>
-              <button
-                type="button"
-                role="option"
-                aria-selected={value === option.value}
-                onClick={() => choose(option.value)}
-                className={`w-full cursor-pointer py-2 text-left text-body font-semibold ${
-                  value === option.value ? "text-blue-1" : "text-ink"
-                }`}
-              >
-                {option.label}
-              </button>
-            </li>
-          ))}
-        </ul>
-      ) : null}
+        <option value="">Не задано</option>
+        {KEEP_IN_TOUCH_OPTIONS.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
     </Field>
   );
 }
