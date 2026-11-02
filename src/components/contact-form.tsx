@@ -2,11 +2,14 @@
 
 import { useActionState, useState, type ReactNode } from "react";
 
+import Link from "next/link";
+
 import { CtaButton } from "@/components/cta-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { KeepInTouchFrequency } from "@/db/schema";
+import { contactFormGroups, type GroupRecord } from "@/lib/groups";
 import { KEEP_IN_TOUCH_FIELD_LABEL, KEEP_IN_TOUCH_OPTIONS } from "@/lib/keep-in-touch";
 import { createContact, updateContact, type ActionState } from "@/server/contacts";
 
@@ -20,6 +23,7 @@ export type ContactFormValues = {
   email: string | null;
   agreement: string | null;
   keepInTouchFrequency: KeepInTouchFrequency | null;
+  groupIds: number[];
 };
 
 function Field({
@@ -119,7 +123,48 @@ function FrequencyField({ defaultValue }: { defaultValue: string }) {
   );
 }
 
-export function ContactForm({ contact }: { contact?: ContactFormValues }) {
+function GroupsField({ groups, selectedIds }: { groups: GroupRecord[]; selectedIds: number[] }) {
+  const field = contactFormGroups(groups);
+
+  return (
+    <fieldset className="rounded-r14 bg-mist px-3 py-2.5 lg:rounded-r16 lg:px-4 lg:py-3.5">
+      <legend className="mb-1 text-ui-14 font-medium text-label">Группы</legend>
+      {field.groups.length === 0 ? (
+        <p className="text-body font-semibold text-ink">
+          Групп пока нет.{" "}
+          <Link href={field.groupsPageHref} className="text-blue-1 hover:text-ink">
+            Создать на странице «Группы»
+          </Link>
+        </p>
+      ) : (
+        <ul className="flex flex-col gap-1">
+          {field.groups.map((group) => (
+            <li key={group.id}>
+              <label className="flex items-center gap-2 text-body font-semibold text-ink">
+                <input
+                  type="checkbox"
+                  name="groupId"
+                  value={group.id}
+                  defaultChecked={selectedIds.includes(group.id)}
+                  className="size-4 accent-blue-1"
+                />
+                {group.name}
+              </label>
+            </li>
+          ))}
+        </ul>
+      )}
+    </fieldset>
+  );
+}
+
+export function ContactForm({
+  contact,
+  groups,
+}: {
+  contact?: ContactFormValues;
+  groups: GroupRecord[];
+}) {
   const action = contact ? updateContact : createContact;
   const [state, formAction, pending] = useActionState(action, initialState);
 
@@ -173,6 +218,7 @@ export function ContactForm({ contact }: { contact?: ContactFormValues }) {
         />
       </Field>
       <FrequencyField defaultValue={contact?.keepInTouchFrequency ?? ""} />
+      <GroupsField groups={groups} selectedIds={contact?.groupIds ?? []} />
       {state.error ? (
         <p role="alert" className="text-ui-14 text-destructive">
           {state.error}

@@ -7,6 +7,7 @@ import { NoteForm } from "@/components/note-form";
 import { RefreshOnMount } from "@/components/refresh-on-mount";
 import { getContact } from "@/db/queries";
 import { avatarTone, contactInitials } from "@/lib/contact-style";
+import { groupCardLabel } from "@/lib/groups";
 import { KEEP_IN_TOUCH_FIELD_LABEL, KEEP_IN_TOUCH_LABELS } from "@/lib/keep-in-touch";
 
 const dateFormat = new Intl.DateTimeFormat("ru-RU", {
@@ -54,7 +55,7 @@ export async function ContactCard({ params }: { params: Promise<{ id: string }> 
     notFound();
   }
 
-  const { contact, notes } = result;
+  const { contact, notes, groups } = result;
 
   return (
     <div className="flex flex-col gap-6">
@@ -90,6 +91,7 @@ export async function ContactCard({ params }: { params: Promise<{ id: string }> 
           {contact.keepInTouchFrequency ? (
             <Field label={KEEP_IN_TOUCH_FIELD_LABEL} value={KEEP_IN_TOUCH_LABELS[contact.keepInTouchFrequency]} />
           ) : null}
+          <Field label="Группы" value={groupCardLabel(groups.map((group) => group.name))} wide />
         </dl>
       </section>
 
