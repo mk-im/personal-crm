@@ -91,10 +91,9 @@ describe("buildHomeView sections", () => {
       memberships: [membership(10, family.id), membership(10, tennis.id)],
     });
 
-    expect(view.sections.map((section) => section.contacts.map((contact) => contact.name))).toEqual([
-      ["Аня"],
-      ["Аня"],
-    ]);
+    expect(view.sections.map((section) => section.contacts.map((contact) => contact.name))).toEqual(
+      [["Аня"], ["Аня"]],
+    );
   });
 
   it("Ungrouped section is last", () => {
@@ -104,7 +103,10 @@ describe("buildHomeView sections", () => {
       memberships: [membership(10, family.id)],
     });
 
-    expect(view.sections.map((section) => section.title)).toEqual(["Семья", UNGROUPED_SECTION_TITLE]);
+    expect(view.sections.map((section) => section.title)).toEqual([
+      "Семья",
+      UNGROUPED_SECTION_TITLE,
+    ]);
   });
 
   it("Empty group stays off the home page", () => {

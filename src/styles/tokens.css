@@ -104,5 +104,10 @@
 :root {
   --gradient-brand:
     radial-gradient(120% 60% at 50% 0%, var(--color-blue-3) 0%, transparent 60%),
-    linear-gradient(180deg, var(--color-blue-1) 0%, var(--color-blue-2) 70%, var(--color-blue-deep) 100%);
+    linear-gradient(
+      180deg,
+      var(--color-blue-1) 0%,
+      var(--color-blue-2) 70%,
+      var(--color-blue-deep) 100%
+    );
 }

@@ -25,11 +25,7 @@ function contactsLabel(count: number) {
   return `${count} контактов`;
 }
 
-export async function ContactList({
-  searchParams,
-}: {
-  searchParams: Promise<{ q?: string }>;
-}) {
+export async function ContactList({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const { q } = await searchParams;
   const query = (q ?? "").trim();
   const [contacts, groups, due] = await Promise.all([
@@ -108,14 +104,23 @@ export async function ContactList({
                         href={`/contacts/${contact.id}`}
                         className="flex items-center gap-3 px-4 py-2.5 hover:bg-mist lg:gap-3.5 lg:px-5 lg:py-3.5"
                       >
-                        <Avatar initials={contactInitials(contact.name)} tone={avatarTone(contact.name)} />
+                        <Avatar
+                          initials={contactInitials(contact.name)}
+                          tone={avatarTone(contact.name)}
+                        />
                         <span className="min-w-0">
-                          <span className="block text-ui-15 font-bold lg:text-ui-17">{contact.name}</span>
+                          <span className="block text-ui-15 font-bold lg:text-ui-17">
+                            {contact.name}
+                          </span>
                           {contact.metThrough ? (
-                            <span className="mt-0.5 block text-ui-12 text-label lg:text-ui-14">{contact.metThrough}</span>
+                            <span className="mt-0.5 block text-ui-12 text-label lg:text-ui-14">
+                              {contact.metThrough}
+                            </span>
                           ) : null}
                           {groupsLabel ? (
-                            <span className="mt-0.5 block text-ui-12 text-label lg:text-ui-14">{groupsLabel}</span>
+                            <span className="mt-0.5 block text-ui-12 text-label lg:text-ui-14">
+                              {groupsLabel}
+                            </span>
                           ) : null}
                         </span>
                       </Link>

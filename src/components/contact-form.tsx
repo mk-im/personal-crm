@@ -122,7 +122,10 @@ export function ContactForm({
   const [state, formAction, pending] = useActionState(action, initialState);
 
   return (
-    <form action={formAction} className="flex flex-col gap-2 rounded-r22 bg-white p-4.5 shadow-card lg:rounded-r26 lg:p-6.5 lg:shadow-card-lg">
+    <form
+      action={formAction}
+      className="flex flex-col gap-2 rounded-r22 bg-white p-4.5 shadow-card lg:rounded-r26 lg:p-6.5 lg:shadow-card-lg"
+    >
       {contact ? <input type="hidden" name="id" value={contact.id} /> : null}
       <Field id="name" label="Имя">
         <Input

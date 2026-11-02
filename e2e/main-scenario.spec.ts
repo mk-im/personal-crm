@@ -31,7 +31,10 @@ test("main scenario from product idea", async ({ page, browser }) => {
   await expect(page.getByRole("heading", { name: contactName })).toBeVisible();
 
   await searchContact(page, contactName);
-  await page.getByRole("link", { name: new RegExp(contactName) }).first().click();
+  await page
+    .getByRole("link", { name: new RegExp(contactName) })
+    .first()
+    .click();
   await expect(page.getByRole("heading", { name: contactName })).toBeVisible();
 
   await page.getByLabel("Заметка после разговора").fill(noteText);
@@ -72,7 +75,10 @@ test("main scenario from product idea", async ({ page, browser }) => {
   await expect(page.getByText(groupB, { exact: true }).first()).toBeVisible();
 
   await searchContact(page, contactName);
-  await page.getByRole("link", { name: new RegExp(contactName) }).first().click();
+  await page
+    .getByRole("link", { name: new RegExp(contactName) })
+    .first()
+    .click();
   await page.getByRole("link", { name: "Изменить" }).click();
   await page.getByRole("checkbox", { name: groupA }).check();
   await page.getByRole("checkbox", { name: groupB }).check();

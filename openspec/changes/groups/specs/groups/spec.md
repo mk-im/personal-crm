@@ -32,7 +32,7 @@ The system SHALL создавать группу с страницы «Груп�
 
 #### Scenario: Trim the name
 
-- **WHEN** пользователь сохраняет «  Теннис  »
+- **WHEN** пользователь сохраняет « Теннис »
 - **THEN** группа называется «Теннис»
 
 ### Requirement: Reject an invalid group name

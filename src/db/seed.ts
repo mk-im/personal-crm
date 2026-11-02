@@ -159,7 +159,10 @@ async function seed() {
     };
   });
 
-  const created = await db.insert(contacts).values(rows).returning({ id: contacts.id, name: contacts.name });
+  const created = await db
+    .insert(contacts)
+    .values(rows)
+    .returning({ id: contacts.id, name: contacts.name });
 
   const noteRows = created
     .filter((_, index) => index % 10 === 0)

@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import { CtaButton } from "@/components/cta-button";
 
 export function ErrorScreen({ onRetry }: { onRetry: () => void }) {
@@ -12,9 +14,9 @@ export function ErrorScreen({ onRetry }: { onRetry: () => void }) {
       <CtaButton type="button" icon="↻" onClick={onRetry} className="w-full sm:w-auto">
         Обновить
       </CtaButton>
-      <a href="/" className="w-fit text-ui-14 font-semibold text-label hover:text-ink">
+      <Link href="/" className="w-fit text-ui-14 font-semibold text-label hover:text-ink">
         ← К списку
-      </a>
+      </Link>
     </div>
   );
 }

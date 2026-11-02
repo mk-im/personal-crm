@@ -1,7 +1,14 @@
 import { and, asc, desc, eq, ilike, inArray, isNotNull, sql } from "drizzle-orm";
 
 import { db } from "./index";
-import { contactGroups, contacts, groups, keepInTouchFrequencies, notes, type KeepInTouchFrequency } from "./schema";
+import {
+  contactGroups,
+  contacts,
+  groups,
+  keepInTouchFrequencies,
+  notes,
+  type KeepInTouchFrequency,
+} from "./schema";
 
 function likePattern(query: string) {
   const escaped = query.replace(/[\\%_]/g, "\\$&");

@@ -1,5 +1,14 @@
 import { sql } from "drizzle-orm";
-import { index, integer, pgTable, primaryKey, serial, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
+import {
+  index,
+  integer,
+  pgTable,
+  primaryKey,
+  serial,
+  text,
+  timestamp,
+  uniqueIndex,
+} from "drizzle-orm/pg-core";
 
 export const keepInTouchFrequencies = ["weekly", "monthly", "quarterly", "yearly"] as const;
 export type KeepInTouchFrequency = (typeof keepInTouchFrequencies)[number];

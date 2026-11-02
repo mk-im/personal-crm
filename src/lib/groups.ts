@@ -141,7 +141,9 @@ export function prepareGroupName(
   }
 
   const currentKey = currentName === undefined ? null : groupNameKey(currentName);
-  const taken = existingNames.some((existing) => groupNameKey(existing) === key && groupNameKey(existing) !== currentKey);
+  const taken = existingNames.some(
+    (existing) => groupNameKey(existing) === key && groupNameKey(existing) !== currentKey,
+  );
 
   if (taken) {
     return { ok: false, error: DUPLICATE_GROUP_NAME_ERROR };

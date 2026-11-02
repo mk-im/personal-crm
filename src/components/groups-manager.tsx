@@ -21,7 +21,12 @@ function CreateGroupForm() {
     >
       <Label htmlFor="group-name">Новая группа</Label>
       <div className="flex flex-col gap-2 sm:flex-row">
-        <Input id="group-name" name="name" autoComplete="off" className="border-transparent bg-mist" />
+        <Input
+          id="group-name"
+          name="name"
+          autoComplete="off"
+          className="border-transparent bg-mist"
+        />
         <button type="submit" disabled={pending} className={buttonVariants({ size: "lg" })}>
           {pending ? "Сохранение…" : "Создать"}
         </button>

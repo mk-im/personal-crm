@@ -12,7 +12,12 @@ const manrope = Manrope({
   variable: "--font-manrope",
 });
 
-export default function GlobalError({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
+export default function GlobalError({
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
   return (
     <html lang="ru" className={`${manrope.variable} h-full`}>
       <body className={`${manrope.className} flex min-h-full w-full flex-col bg-mist text-ink`}>

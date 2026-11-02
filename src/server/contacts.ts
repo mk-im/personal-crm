@@ -42,10 +42,7 @@ function readGroupIds(formData: FormData) {
   });
 }
 
-export async function createContact(
-  _state: ActionState,
-  formData: FormData,
-): Promise<ActionState> {
+export async function createContact(_state: ActionState, formData: FormData): Promise<ActionState> {
   return runContactAction("createContact", SAVE_FAILED, async () => {
     const name = String(formData.get("name") ?? "").trim();
 
@@ -84,9 +81,9 @@ export async function createContact(
         .returning({ id: contacts.id });
 
       if (plan.groupIds.length > 0) {
-        await tx.insert(contactGroups).values(
-          plan.groupIds.map((groupId) => ({ contactId: row.id, groupId })),
-        );
+        await tx
+          .insert(contactGroups)
+          .values(plan.groupIds.map((groupId) => ({ contactId: row.id, groupId })));
       }
 
       return { ok: true as const, id: row.id };
@@ -102,10 +99,7 @@ export async function createContact(
   });
 }
 
-export async function updateContact(
-  _state: ActionState,
-  formData: FormData,
-): Promise<ActionState> {
+export async function updateContact(_state: ActionState, formData: FormData): Promise<ActionState> {
   return runContactAction("updateContact", SAVE_FAILED, async () => {
     const id = Number(formData.get("id"));
     const name = String(formData.get("name") ?? "").trim();
@@ -169,7 +163,9 @@ export async function updateContact(
       await tx.delete(contactGroups).where(eq(contactGroups.contactId, id));
 
       if (plan.groupIds.length > 0) {
-        await tx.insert(contactGroups).values(plan.groupIds.map((groupId) => ({ contactId: id, groupId })));
+        await tx
+          .insert(contactGroups)
+          .values(plan.groupIds.map((groupId) => ({ contactId: id, groupId })));
       }
 
       return { ok: true as const };
@@ -217,10 +213,7 @@ export async function addNote(_state: ActionState, formData: FormData): Promise<
   });
 }
 
-export async function deleteContact(
-  _state: ActionState,
-  formData: FormData,
-): Promise<ActionState> {
+export async function deleteContact(_state: ActionState, formData: FormData): Promise<ActionState> {
   return runContactAction("deleteContact", DELETE_FAILED, async () => {
     const id = Number(formData.get("id"));
 
