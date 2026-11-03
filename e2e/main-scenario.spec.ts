@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
-import { markContactOverdue } from "./helpers/db";
+import { markContactMostOverdue } from "./helpers/db";
 
 const stamp = Date.now();
 const contactName = `E2E Main ${stamp}`;
@@ -60,7 +60,7 @@ test("main scenario from product idea", async ({ page, browser }) => {
   await expect(otherPage.getByText(editedPhone)).toBeVisible();
   await other.close();
 
-  await markContactOverdue(contactName, 40);
+  await markContactMostOverdue(contactName);
   await page.goto("/");
   const due = page.getByRole("region", { name: "Пора связаться" });
   await expect(due).toBeVisible();
