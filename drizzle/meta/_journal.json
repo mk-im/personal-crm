@@ -15,6 +15,13 @@
       "when": 1793033930561,
       "tag": "0001_chubby_callisto",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793652003387,
+      "tag": "0002_groups",
+      "breakpoints": true
     }
   ]
 }

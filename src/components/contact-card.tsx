@@ -7,6 +7,7 @@ import { NoteForm } from "@/components/note-form";
 import { RefreshOnMount } from "@/components/refresh-on-mount";
 import { getContact } from "@/db/queries";
 import { avatarTone, contactInitials } from "@/lib/contact-style";
+import { groupCardLabel } from "@/lib/groups";
 import { KEEP_IN_TOUCH_FIELD_LABEL, KEEP_IN_TOUCH_LABELS } from "@/lib/keep-in-touch";
 
 const dateFormat = new Intl.DateTimeFormat("ru-RU", {
@@ -32,10 +33,14 @@ function Field({
           : "rounded-r14 bg-mist px-3 py-2.5 lg:rounded-r16 lg:px-4 lg:py-3.5"
       }
     >
-      <dt className={`mb-0.75 text-ui-11 font-medium lg:mb-1 lg:text-ui-12 ${wide ? "text-blue-1" : "text-muted"}`}>
+      <dt
+        className={`mb-0.75 text-ui-11 font-medium lg:mb-1 lg:text-ui-12 ${wide ? "text-blue-1" : "text-muted"}`}
+      >
         {label}
       </dt>
-      <dd className="whitespace-pre-wrap text-ui-14 font-semibold lg:text-ui-16">{value?.trim() ? value : "не указано"}</dd>
+      <dd className="whitespace-pre-wrap text-ui-14 font-semibold lg:text-ui-16">
+        {value?.trim() ? value : "не указано"}
+      </dd>
     </div>
   );
 }
@@ -54,7 +59,7 @@ export async function ContactCard({ params }: { params: Promise<{ id: string }> 
     notFound();
   }
 
-  const { contact, notes } = result;
+  const { contact, notes, groups } = result;
 
   return (
     <div className="flex flex-col gap-6">
@@ -88,8 +93,12 @@ export async function ContactCard({ params }: { params: Promise<{ id: string }> 
           <Field label="Откуда знакомы" value={contact.metThrough} wide />
           <Field label="О чём договорились" value={contact.agreement} wide />
           {contact.keepInTouchFrequency ? (
-            <Field label={KEEP_IN_TOUCH_FIELD_LABEL} value={KEEP_IN_TOUCH_LABELS[contact.keepInTouchFrequency]} />
+            <Field
+              label={KEEP_IN_TOUCH_FIELD_LABEL}
+              value={KEEP_IN_TOUCH_LABELS[contact.keepInTouchFrequency]}
+            />
           ) : null}
+          <Field label="Группы" value={groupCardLabel(groups.map((group) => group.name))} wide />
         </dl>
       </section>
 
@@ -101,10 +110,17 @@ export async function ContactCard({ params }: { params: Promise<{ id: string }> 
         ) : (
           <ul className="flex flex-col gap-3">
             {notes.map((note) => (
-              <li key={note.id} className="rounded-r14 bg-mist px-3.5 py-3 lg:rounded-r16 lg:px-4 lg:py-3.5">
+              <li
+                key={note.id}
+                className="rounded-r14 bg-mist px-3.5 py-3 lg:rounded-r16 lg:px-4 lg:py-3.5"
+              >
                 <p className="mb-1 text-ui-11 font-medium text-blue-1 lg:text-ui-12">Заметка</p>
-                <p className="whitespace-pre-wrap text-ui-13 leading-[1.4] lg:text-ui-15">{note.body}</p>
-                <p className="mt-2 text-ui-12 text-label lg:text-ui-14">{dateFormat.format(note.createdAt)}</p>
+                <p className="whitespace-pre-wrap text-ui-13 leading-[1.4] lg:text-ui-15">
+                  {note.body}
+                </p>
+                <p className="mt-2 text-ui-12 text-label lg:text-ui-14">
+                  {dateFormat.format(note.createdAt)}
+                </p>
               </li>
             ))}
           </ul>

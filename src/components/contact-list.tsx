@@ -6,8 +6,9 @@ import { DueContacts } from "@/components/due-contacts";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { listContacts } from "@/db/queries";
+import { listContacts, listDueContacts, listGroups, listMemberships } from "@/db/queries";
 import { avatarTone, contactInitials } from "@/lib/contact-style";
+import { buildHomeView, groupRowLabel } from "@/lib/groups";
 
 function contactsLabel(count: number) {
   const mod10 = count % 10;
@@ -24,14 +25,22 @@ function contactsLabel(count: number) {
   return `${count} контактов`;
 }
 
-export async function ContactList({
-  searchParams,
-}: {
-  searchParams: Promise<{ q?: string }>;
-}) {
+export async function ContactList({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const { q } = await searchParams;
   const query = (q ?? "").trim();
-  const contacts = await listContacts(query);
+  const [contacts, groups, due] = await Promise.all([
+    listContacts(query),
+    listGroups(),
+    query ? Promise.resolve([]) : listDueContacts(),
+  ]);
+  const memberships = await listMemberships(contacts.map((contact) => contact.id));
+  const view = buildHomeView({
+    contacts,
+    groups,
+    memberships,
+    query,
+    hasDueContacts: due.length > 0,
+  });
 
   return (
     <div className="flex flex-col gap-6">
@@ -39,7 +48,7 @@ export async function ContactList({
         <div>
           <h1 className="text-lead font-medium lg:text-lead-lg">Контакты</h1>
           <p className="mt-1 text-ui-14 text-muted lg:text-ui-16">
-            {query ? "Нашли" : "Всего"} {contactsLabel(contacts.length)}
+            {query ? "Нашли" : "Всего"} {contactsLabel(view.count)}
           </p>
         </div>
         <CtaLink href="/contacts/new" icon="+">
@@ -74,34 +83,54 @@ export async function ContactList({
         </div>
       </form>
 
-      {query ? null : <DueContacts />}
+      {view.showDueBlock ? <DueContacts /> : null}
 
-      {contacts.length === 0 ? (
+      {view.sections.length === 0 ? (
         <p className="rounded-r22 bg-white px-4 py-10 text-center text-muted shadow-card lg:rounded-r26 lg:shadow-card-lg">
           {query ? "Никого не нашли по этому имени" : "Пока нет контактов"}
         </p>
       ) : (
-        <ul className="overflow-hidden rounded-r22 bg-white shadow-card lg:rounded-r26 lg:shadow-card-lg">
-          {contacts.map((contact) => (
-            <li key={contact.id} className="border-b border-divider last:border-b-0">
-              <Link
-                href={`/contacts/${contact.id}`}
-                className="flex items-center gap-3 px-4 py-2.5 hover:bg-mist lg:gap-3.5 lg:px-5 lg:py-3.5"
-              >
-                <Avatar
-                  initials={contactInitials(contact.name)}
-                  tone={avatarTone(contact.name)}
-                />
-                <span className="min-w-0">
-                  <span className="block text-ui-15 font-bold lg:text-ui-17">{contact.name}</span>
-                  {contact.metThrough ? (
-                    <span className="mt-0.5 block text-ui-12 text-label lg:text-ui-14">{contact.metThrough}</span>
-                  ) : null}
-                </span>
-              </Link>
-            </li>
+        <div className="flex flex-col gap-6">
+          {view.sections.map((section) => (
+            <section key={section.title} className="flex flex-col gap-2">
+              <h2 className="text-ui-18 font-semibold">{section.title}</h2>
+              <ul className="overflow-hidden rounded-r22 bg-white shadow-card lg:rounded-r26 lg:shadow-card-lg">
+                {section.contacts.map((contact) => {
+                  const groupsLabel = groupRowLabel(contact.groupNames);
+
+                  return (
+                    <li key={contact.id} className="border-b border-divider last:border-b-0">
+                      <Link
+                        href={`/contacts/${contact.id}`}
+                        className="flex items-center gap-3 px-4 py-2.5 hover:bg-mist lg:gap-3.5 lg:px-5 lg:py-3.5"
+                      >
+                        <Avatar
+                          initials={contactInitials(contact.name)}
+                          tone={avatarTone(contact.name)}
+                        />
+                        <span className="min-w-0">
+                          <span className="block text-ui-15 font-bold lg:text-ui-17">
+                            {contact.name}
+                          </span>
+                          {contact.metThrough ? (
+                            <span className="mt-0.5 block text-ui-12 text-label lg:text-ui-14">
+                              {contact.metThrough}
+                            </span>
+                          ) : null}
+                          {groupsLabel ? (
+                            <span className="mt-0.5 block text-ui-12 text-label lg:text-ui-14">
+                              {groupsLabel}
+                            </span>
+                          ) : null}
+                        </span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
           ))}
-        </ul>
+        </div>
       )}
     </div>
   );

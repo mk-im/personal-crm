@@ -13,7 +13,10 @@ export function NoteForm({ contactId }: { contactId: number }) {
   const [state, formAction, pending] = useActionState(addNote, initialState);
 
   return (
-    <form action={formAction} className="flex flex-col gap-3 rounded-r22 bg-white p-4.5 shadow-card lg:rounded-r26 lg:p-6.5 lg:shadow-card-lg">
+    <form
+      action={formAction}
+      className="flex flex-col gap-3 rounded-r22 bg-white p-4.5 shadow-card lg:rounded-r26 lg:p-6.5 lg:shadow-card-lg"
+    >
       <input type="hidden" name="contactId" value={contactId} />
       <div className="rounded-r14 bg-mist px-3 py-2.5 lg:rounded-r16 lg:px-4 lg:py-3.5">
         <Label htmlFor="body" className="mb-1">

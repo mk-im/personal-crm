@@ -5,7 +5,8 @@ import { revalidatePath } from "next/cache";
 import { redirect, unstable_rethrow } from "next/navigation";
 
 import { db } from "@/db";
-import { contacts, notes } from "@/db/schema";
+import { contactGroups, contacts, groups, notes } from "@/db/schema";
+import { planMembership } from "@/lib/groups";
 import { readKeepInTouchFrequency } from "@/lib/keep-in-touch";
 
 export type ActionState = {
@@ -34,10 +35,14 @@ function optionalText(formData: FormData, key: string) {
   return value.length > 0 ? value : null;
 }
 
-export async function createContact(
-  _state: ActionState,
-  formData: FormData,
-): Promise<ActionState> {
+function readGroupIds(formData: FormData) {
+  return formData.getAll("groupId").flatMap((value) => {
+    const id = Number(value);
+    return Number.isInteger(id) && id > 0 ? [id] : [];
+  });
+}
+
+export async function createContact(_state: ActionState, formData: FormData): Promise<ActionState> {
   return runContactAction("createContact", SAVE_FAILED, async () => {
     const name = String(formData.get("name") ?? "").trim();
 
@@ -51,28 +56,50 @@ export async function createContact(
       return { error: "Выберите частоту" };
     }
 
-    const [created] = await db
-      .insert(contacts)
-      .values({
-        name,
-        metThrough: optionalText(formData, "metThrough"),
-        phone: optionalText(formData, "phone"),
-        email: optionalText(formData, "email"),
-        agreement: optionalText(formData, "agreement"),
-        keepInTouchFrequency: frequency.value,
-        keepInTouchSetAt: frequency.value ? new Date() : null,
-      })
-      .returning({ id: contacts.id });
+    const created = await db.transaction(async (tx) => {
+      const existingGroups = await tx.select({ id: groups.id }).from(groups);
+      const plan = planMembership(
+        readGroupIds(formData),
+        existingGroups.map((group) => group.id),
+      );
+
+      if (!plan.ok) {
+        return plan;
+      }
+
+      const [row] = await tx
+        .insert(contacts)
+        .values({
+          name,
+          metThrough: optionalText(formData, "metThrough"),
+          phone: optionalText(formData, "phone"),
+          email: optionalText(formData, "email"),
+          agreement: optionalText(formData, "agreement"),
+          keepInTouchFrequency: frequency.value,
+          keepInTouchSetAt: frequency.value ? new Date() : null,
+        })
+        .returning({ id: contacts.id });
+
+      if (plan.groupIds.length > 0) {
+        await tx
+          .insert(contactGroups)
+          .values(plan.groupIds.map((groupId) => ({ contactId: row.id, groupId })));
+      }
+
+      return { ok: true as const, id: row.id };
+    });
+
+    if (!created.ok) {
+      return { error: created.error };
+    }
 
     revalidatePath("/");
+    revalidatePath("/groups");
     redirect(`/contacts/${created.id}`);
   });
 }
 
-export async function updateContact(
-  _state: ActionState,
-  formData: FormData,
-): Promise<ActionState> {
+export async function updateContact(_state: ActionState, formData: FormData): Promise<ActionState> {
   return runContactAction("updateContact", SAVE_FAILED, async () => {
     const id = Number(formData.get("id"));
     const name = String(formData.get("name") ?? "").trim();
@@ -106,23 +133,50 @@ export async function updateContact(
 
     const frequencyChanged = existing.keepInTouchFrequency !== frequency.value;
 
-    await db
-      .update(contacts)
-      .set({
-        name,
-        metThrough: optionalText(formData, "metThrough"),
-        phone: optionalText(formData, "phone"),
-        email: optionalText(formData, "email"),
-        agreement: optionalText(formData, "agreement"),
-        ...(frequencyChanged
-          ? frequency.value
-            ? { keepInTouchFrequency: frequency.value, keepInTouchSetAt: new Date() }
-            : { keepInTouchFrequency: null, keepInTouchSetAt: null }
-          : {}),
-      })
-      .where(eq(contacts.id, id));
+    const saved = await db.transaction(async (tx) => {
+      const existingGroups = await tx.select({ id: groups.id }).from(groups);
+      const plan = planMembership(
+        readGroupIds(formData),
+        existingGroups.map((group) => group.id),
+      );
+
+      if (!plan.ok) {
+        return plan;
+      }
+
+      await tx
+        .update(contacts)
+        .set({
+          name,
+          metThrough: optionalText(formData, "metThrough"),
+          phone: optionalText(formData, "phone"),
+          email: optionalText(formData, "email"),
+          agreement: optionalText(formData, "agreement"),
+          ...(frequencyChanged
+            ? frequency.value
+              ? { keepInTouchFrequency: frequency.value, keepInTouchSetAt: new Date() }
+              : { keepInTouchFrequency: null, keepInTouchSetAt: null }
+            : {}),
+        })
+        .where(eq(contacts.id, id));
+
+      await tx.delete(contactGroups).where(eq(contactGroups.contactId, id));
+
+      if (plan.groupIds.length > 0) {
+        await tx
+          .insert(contactGroups)
+          .values(plan.groupIds.map((groupId) => ({ contactId: id, groupId })));
+      }
+
+      return { ok: true as const };
+    });
+
+    if (!saved.ok) {
+      return { error: saved.error };
+    }
 
     revalidatePath("/");
+    revalidatePath("/groups");
     revalidatePath(`/contacts/${id}`);
     revalidatePath(`/contacts/${id}/edit`);
     redirect(`/contacts/${id}`);
@@ -159,10 +213,7 @@ export async function addNote(_state: ActionState, formData: FormData): Promise<
   });
 }
 
-export async function deleteContact(
-  _state: ActionState,
-  formData: FormData,
-): Promise<ActionState> {
+export async function deleteContact(_state: ActionState, formData: FormData): Promise<ActionState> {
   return runContactAction("deleteContact", DELETE_FAILED, async () => {
     const id = Number(formData.get("id"));
 
@@ -182,6 +233,7 @@ export async function deleteContact(
 
     await db.delete(contacts).where(eq(contacts.id, id));
     revalidatePath("/");
+    revalidatePath("/groups");
     revalidatePath(`/contacts/${id}`);
     revalidatePath(`/contacts/${id}/edit`);
     redirect("/");

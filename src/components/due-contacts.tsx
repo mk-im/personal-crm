@@ -17,7 +17,9 @@ export async function DueContacts() {
       aria-label="Пора связаться"
       className="overflow-hidden rounded-r22 bg-white shadow-card lg:rounded-r26 lg:shadow-card-lg"
     >
-      <h2 className="px-4 pt-3.5 pb-2 text-ui-18 font-semibold lg:px-5 lg:pt-4.5 lg:pb-2.5">Пора связаться</h2>
+      <h2 className="px-4 pt-3.5 pb-2 text-ui-18 font-semibold lg:px-5 lg:pt-4.5 lg:pb-2.5">
+        Пора связаться
+      </h2>
       <ul>
         {due.map((contact) => (
           <li key={contact.id} className="border-t border-divider">
@@ -31,7 +33,9 @@ export async function DueContacts() {
                 <span className="mt-0.5 block text-ui-12 text-label lg:text-ui-14">
                   {KEEP_IN_TOUCH_LABELS[contact.keepInTouchFrequency]}
                   {" · "}
-                  <span className="font-semibold text-ink">{overdueDaysPhrase(contact.overdueDays)}</span>
+                  <span className="font-semibold text-ink">
+                    {overdueDaysPhrase(contact.overdueDays)}
+                  </span>
                 </span>
               </span>
             </Link>

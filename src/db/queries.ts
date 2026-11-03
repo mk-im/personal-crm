@@ -1,7 +1,14 @@
-import { and, asc, desc, eq, ilike, isNotNull, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, inArray, isNotNull, sql } from "drizzle-orm";
 
 import { db } from "./index";
-import { contacts, keepInTouchFrequencies, notes, type KeepInTouchFrequency } from "./schema";
+import {
+  contactGroups,
+  contacts,
+  groups,
+  keepInTouchFrequencies,
+  notes,
+  type KeepInTouchFrequency,
+} from "./schema";
 
 function likePattern(query: string) {
   const escaped = query.replace(/[\\%_]/g, "\\$&");
@@ -20,6 +27,26 @@ export async function listContacts(query: string) {
     .from(contacts)
     .where(nameFilter)
     .orderBy(asc(contacts.name));
+}
+
+export async function listGroups() {
+  const rows = await db.select({ id: groups.id, name: groups.name }).from(groups);
+
+  return rows.sort((left, right) => left.name.localeCompare(right.name, "ru"));
+}
+
+export async function listMemberships(contactIds: number[]) {
+  if (contactIds.length === 0) {
+    return [];
+  }
+
+  return db
+    .select({
+      contactId: contactGroups.contactId,
+      groupId: contactGroups.groupId,
+    })
+    .from(contactGroups)
+    .where(inArray(contactGroups.contactId, contactIds));
 }
 
 export type DueContact = {
@@ -89,5 +116,13 @@ export async function getContact(id: number) {
     .where(eq(notes.contactId, id))
     .orderBy(desc(notes.createdAt));
 
-  return { contact, notes: contactNotes };
+  const contactGroupRows = await db
+    .select({ id: groups.id, name: groups.name })
+    .from(contactGroups)
+    .innerJoin(groups, eq(contactGroups.groupId, groups.id))
+    .where(eq(contactGroups.contactId, id));
+
+  contactGroupRows.sort((left, right) => left.name.localeCompare(right.name, "ru"));
+
+  return { contact, notes: contactNotes, groups: contactGroupRows };
 }

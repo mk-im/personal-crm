@@ -1,0 +1,9 @@
+pnpm-lock.yaml
+.next
+out
+build
+coverage
+test-results
+playwright-report
+blob-report
+drizzle/meta

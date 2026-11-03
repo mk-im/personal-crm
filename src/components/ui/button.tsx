@@ -1,6 +1,6 @@
-import { Button as ButtonPrimitive } from "@base-ui/react/button"
-import { cva, type VariantProps } from "class-variance-authority"
-import { cn } from "cn"
+import { Button as ButtonPrimitive } from "@base-ui/react/button";
+import { cva, type VariantProps } from "class-variance-authority";
+import { cn } from "cn";
 
 const buttonVariants = cva(
   "group/button inline-flex shrink-0 items-center justify-center border border-transparent bg-clip-padding font-semibold whitespace-nowrap transition-colors outline-none select-none focus-visible:ring-2 focus-visible:ring-sky focus-visible:ring-offset-3 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
@@ -8,14 +8,10 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: "bg-black text-white hover:bg-black-soft",
-        outline:
-          "border-divider bg-white text-ink shadow-card hover:bg-note",
-        secondary:
-          "bg-white text-ink shadow-card hover:bg-note",
-        ghost:
-          "bg-transparent text-label hover:bg-white hover:text-ink",
-        destructive:
-          "bg-destructive/10 text-destructive hover:bg-destructive/20",
+        outline: "border-divider bg-white text-ink shadow-card hover:bg-note",
+        secondary: "bg-white text-ink shadow-card hover:bg-note",
+        ghost: "bg-transparent text-label hover:bg-white hover:text-ink",
+        destructive: "bg-destructive/10 text-destructive hover:bg-destructive/20",
         link: "text-blue-1 underline-offset-4 hover:underline",
       },
       size: {
@@ -33,8 +29,8 @@ const buttonVariants = cva(
       variant: "default",
       size: "default",
     },
-  }
-)
+  },
+);
 
 function Button({
   className,
@@ -48,7 +44,7 @@ function Button({
       className={cn(buttonVariants({ variant, size, className }))}
       {...props}
     />
-  )
+  );
 }
 
-export { Button, buttonVariants }
+export { Button, buttonVariants };
