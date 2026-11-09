@@ -1,14 +1,9 @@
 import { and, asc, desc, eq, ilike, inArray, isNotNull, sql } from "drizzle-orm";
 
+import { dueContacts, isKeepInTouchFrequency, type DueContact } from "@/lib/keep-in-touch";
+
 import { db } from "./index";
-import {
-  contactGroups,
-  contacts,
-  groups,
-  keepInTouchFrequencies,
-  notes,
-  type KeepInTouchFrequency,
-} from "./schema";
+import { contactGroups, contacts, groups, notes } from "./schema";
 
 function likePattern(query: string) {
   const escaped = query.replace(/[\\%_]/g, "\\$&");
@@ -54,59 +49,49 @@ export async function listMemberships(userId: string, contactIds: number[]) {
     .where(and(eq(contacts.userId, userId), inArray(contactGroups.contactId, contactIds)));
 }
 
-export type DueContact = {
-  id: number;
-  name: string;
-  keepInTouchFrequency: KeepInTouchFrequency;
-  overdueDays: number;
-};
+export type { DueContact };
 
 export async function listDueContacts(userId: string): Promise<DueContact[]> {
-  const lastConversation = sql`coalesce(
-    (select max(${notes.createdAt}) from ${notes} where ${notes.contactId} = ${contacts.id}),
-    ${contacts.keepInTouchSetAt}
-  )`;
-  const periodDays = sql`(case
-    when ${contacts.keepInTouchFrequency} = 'weekly' then 7
-    when ${contacts.keepInTouchFrequency} = 'monthly' then 30
-    when ${contacts.keepInTouchFrequency} = 'quarterly' then 90
-    when ${contacts.keepInTouchFrequency} = 'yearly' then 365
-  end)`;
-  const overdueInterval = sql`now() - (${lastConversation} + (${periodDays} * interval '1 day'))`;
-
   const rows = await db
     .select({
       id: contacts.id,
       name: contacts.name,
-      keepInTouchFrequency: contacts.keepInTouchFrequency,
-      overdueDays: sql<number>`greatest(1, floor(extract(epoch from ${overdueInterval}) / 86400.0)::int)`,
+      frequency: contacts.keepInTouchFrequency,
+      frequencySetAt: contacts.keepInTouchSetAt,
+      latestNoteAt: sql<Date | string | null>`(
+        select max(${notes.createdAt}) from ${notes} where ${notes.contactId} = ${contacts.id}
+      )`,
     })
     .from(contacts)
-    .where(
-      and(
-        eq(contacts.userId, userId),
-        isNotNull(contacts.keepInTouchFrequency),
-        sql`${lastConversation} is not null`,
-        sql`${overdueInterval} > interval '0 seconds'`,
-      ),
-    )
-    .orderBy(sql`${overdueInterval} desc`)
-    .limit(5);
+    .where(and(eq(contacts.userId, userId), isNotNull(contacts.keepInTouchFrequency)));
 
-  return rows.flatMap((row) => {
-    if (!row.keepInTouchFrequency || !keepInTouchFrequencies.includes(row.keepInTouchFrequency)) {
-      return [];
-    }
+  return dueContacts(
+    rows.flatMap((row) => {
+      if (!row.frequency || !isKeepInTouchFrequency(row.frequency)) {
+        return [];
+      }
 
-    return [
-      {
-        id: row.id,
-        name: row.name,
-        keepInTouchFrequency: row.keepInTouchFrequency,
-        overdueDays: Number(row.overdueDays),
-      },
-    ];
-  });
+      return [
+        {
+          id: row.id,
+          name: row.name,
+          frequency: row.frequency,
+          frequencySetAt: asDate(row.frequencySetAt),
+          latestNoteAt: asDate(row.latestNoteAt),
+        },
+      ];
+    }),
+    new Date(),
+  );
+}
+
+function asDate(value: Date | string | null) {
+  if (!value) {
+    return null;
+  }
+
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
 }
 
 // Someone else's id and a missing id both come back as null.
