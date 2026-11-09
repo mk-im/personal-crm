@@ -10,8 +10,10 @@ RUN pnpm install --frozen-lockfile
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-# Build-time placeholder so the DB module can import. Runtime overrides this.
+# Build-time placeholders so the DB and sign-in modules can import. Runtime overrides them.
 ENV DATABASE_URL=postgres://build:build@127.0.0.1:5432/build
+ENV BETTER_AUTH_URL=http://127.0.0.1:3000
+ENV BETTER_AUTH_SECRET=build-only-placeholder-not-a-real-secret-0123456789
 RUN pnpm build
 
 FROM base AS runner

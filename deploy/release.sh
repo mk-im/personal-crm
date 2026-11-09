@@ -19,6 +19,8 @@ fi
 export APP_IMAGE
 COMPOSE=(docker compose -p prod -f "$ROOT/deploy/compose.yml" --env-file "$ROOT/.env")
 
+"$ROOT/deploy/backup.sh"
+
 echo "Pulling $APP_IMAGE"
 "${COMPOSE[@]}" pull app
 

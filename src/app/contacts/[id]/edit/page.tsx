@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { ContactForm } from "@/components/contact-form";
 import { RefreshOnMount } from "@/components/refresh-on-mount";
 import { getContact, listGroups } from "@/db/queries";
+import { requireUserId } from "@/lib/session";
 
 function contactFormKey(contact: {
   id: number;
@@ -36,7 +37,8 @@ async function EditContact({ params }: { params: Promise<{ id: string }> }) {
     notFound();
   }
 
-  const [result, groups] = await Promise.all([getContact(contactId), listGroups()]);
+  const userId = await requireUserId();
+  const [result, groups] = await Promise.all([getContact(userId, contactId), listGroups(userId)]);
 
   if (!result) {
     notFound();

@@ -15,7 +15,8 @@ function likePattern(query: string) {
   return `%${escaped}%`;
 }
 
-export async function listContacts(query: string) {
+// Every query takes the owner from the session; nothing here reads the tables whole.
+export async function listContacts(userId: string, query: string) {
   const nameFilter = query ? ilike(contacts.name, likePattern(query)) : undefined;
 
   return db
@@ -25,17 +26,20 @@ export async function listContacts(query: string) {
       metThrough: contacts.metThrough,
     })
     .from(contacts)
-    .where(nameFilter)
+    .where(and(eq(contacts.userId, userId), nameFilter))
     .orderBy(asc(contacts.name));
 }
 
-export async function listGroups() {
-  const rows = await db.select({ id: groups.id, name: groups.name }).from(groups);
+export async function listGroups(userId: string) {
+  const rows = await db
+    .select({ id: groups.id, name: groups.name })
+    .from(groups)
+    .where(eq(groups.userId, userId));
 
   return rows.sort((left, right) => left.name.localeCompare(right.name, "ru"));
 }
 
-export async function listMemberships(contactIds: number[]) {
+export async function listMemberships(userId: string, contactIds: number[]) {
   if (contactIds.length === 0) {
     return [];
   }
@@ -46,7 +50,8 @@ export async function listMemberships(contactIds: number[]) {
       groupId: contactGroups.groupId,
     })
     .from(contactGroups)
-    .where(inArray(contactGroups.contactId, contactIds));
+    .innerJoin(contacts, eq(contactGroups.contactId, contacts.id))
+    .where(and(eq(contacts.userId, userId), inArray(contactGroups.contactId, contactIds)));
 }
 
 export type DueContact = {
@@ -56,7 +61,7 @@ export type DueContact = {
   overdueDays: number;
 };
 
-export async function listDueContacts(): Promise<DueContact[]> {
+export async function listDueContacts(userId: string): Promise<DueContact[]> {
   const lastConversation = sql`coalesce(
     (select max(${notes.createdAt}) from ${notes} where ${notes.contactId} = ${contacts.id}),
     ${contacts.keepInTouchSetAt}
@@ -79,6 +84,7 @@ export async function listDueContacts(): Promise<DueContact[]> {
     .from(contacts)
     .where(
       and(
+        eq(contacts.userId, userId),
         isNotNull(contacts.keepInTouchFrequency),
         sql`${lastConversation} is not null`,
         sql`${overdueInterval} > interval '0 seconds'`,
@@ -103,8 +109,13 @@ export async function listDueContacts(): Promise<DueContact[]> {
   });
 }
 
-export async function getContact(id: number) {
-  const [contact] = await db.select().from(contacts).where(eq(contacts.id, id)).limit(1);
+// Someone else's id and a missing id both come back as null.
+export async function getContact(userId: string, id: number) {
+  const [contact] = await db
+    .select()
+    .from(contacts)
+    .where(and(eq(contacts.userId, userId), eq(contacts.id, id)))
+    .limit(1);
 
   if (!contact) {
     return null;
@@ -125,4 +136,14 @@ export async function getContact(id: number) {
   contactGroupRows.sort((left, right) => left.name.localeCompare(right.name, "ru"));
 
   return { contact, notes: contactNotes, groups: contactGroupRows };
+}
+
+export async function contactBelongsTo(userId: string, id: number) {
+  const [row] = await db
+    .select({ id: contacts.id })
+    .from(contacts)
+    .where(and(eq(contacts.userId, userId), eq(contacts.id, id)))
+    .limit(1);
+
+  return Boolean(row);
 }

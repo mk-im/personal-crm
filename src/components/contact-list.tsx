@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { listContacts, listDueContacts, listGroups, listMemberships } from "@/db/queries";
 import { avatarTone, contactInitials } from "@/lib/contact-style";
 import { buildHomeView, groupRowLabel } from "@/lib/groups";
+import { requireUserId } from "@/lib/session";
 
 function contactsLabel(count: number) {
   const mod10 = count % 10;
@@ -28,12 +29,16 @@ function contactsLabel(count: number) {
 export async function ContactList({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const { q } = await searchParams;
   const query = (q ?? "").trim();
+  const userId = await requireUserId();
   const [contacts, groups, due] = await Promise.all([
-    listContacts(query),
-    listGroups(),
-    query ? Promise.resolve([]) : listDueContacts(),
+    listContacts(userId, query),
+    listGroups(userId),
+    query ? Promise.resolve([]) : listDueContacts(userId),
   ]);
-  const memberships = await listMemberships(contacts.map((contact) => contact.id));
+  const memberships = await listMemberships(
+    userId,
+    contacts.map((contact) => contact.id),
+  );
   const view = buildHomeView({
     contacts,
     groups,
@@ -87,7 +92,7 @@ export async function ContactList({ searchParams }: { searchParams: Promise<{ q?
 
       {view.sections.length === 0 ? (
         <p className="rounded-r22 bg-white px-4 py-10 text-center text-muted shadow-card lg:rounded-r26 lg:shadow-card-lg">
-          {query ? "Никого не нашли по этому имени" : "Пока нет контактов"}
+          {query ? "Никого не нашли по этому имени" : "Добавь первый контакт"}
         </p>
       ) : (
         <div className="flex flex-col gap-6">

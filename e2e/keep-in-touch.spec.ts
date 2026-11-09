@@ -1,8 +1,24 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type BrowserContext, type Page } from "@playwright/test";
 
+import { freshEmail, signIn } from "./helpers/auth";
 import { markContactOverdue } from "./helpers/db";
 
 const stamp = Date.now();
+const userEmail = freshEmail("keep-in-touch");
+let signedIn: Awaited<ReturnType<BrowserContext["storageState"]>>;
+
+// One sign-in for the file; each test gets the same session cookies.
+test.beforeAll(async ({ browser }) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await signIn(page, userEmail);
+  signedIn = await context.storageState();
+  await context.close();
+});
+
+test.beforeEach(async ({ context }) => {
+  await context.addCookies(signedIn.cookies);
+});
 
 async function createContact(page: Page, name: string) {
   await page.goto("/contacts/new");
@@ -58,7 +74,7 @@ test("overdue contact appears in the due block", async ({ page }) => {
   await setFrequency(page, "Раз в неделю");
   await expect(page.getByText("Раз в неделю")).toBeVisible();
 
-  await markContactOverdue(name, 400);
+  await markContactOverdue(userEmail, name, 400);
   await page.goto("/");
   const due = page.getByRole("region", { name: "Пора связаться" });
   const row = due.getByRole("link", { name: new RegExp(name) });
@@ -80,7 +96,7 @@ test("a new note removes the contact from the due block", async ({ page }) => {
 
   await createContact(page, name);
   await setFrequency(page, "Раз в неделю");
-  await markContactOverdue(name, 400);
+  await markContactOverdue(userEmail, name, 400);
 
   await page.goto("/");
   const due = page.getByRole("region", { name: "Пора связаться" });

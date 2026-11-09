@@ -59,9 +59,8 @@ jobs:
           ssh-keyscan -H "$DEPLOY_HOST" >> "$HOME/.ssh/known_hosts"
           ssh -i "$HOME/.ssh/deploy" -o IdentitiesOnly=yes "$DEPLOY_USER@$DEPLOY_HOST" \
             "mkdir -p /home/crm/personal-crm/deploy /home/crm/.docker"
-          scp -i "$HOME/.ssh/deploy" -o IdentitiesOnly=yes \
-            deploy/compose.yml deploy/release.sh deploy/smoke.sh deploy/prune.sh deploy/seed.sh deploy/nginx-app.conf \
-            "$DEPLOY_USER@$DEPLOY_HOST:/home/crm/personal-crm/deploy/"
+          tar -C deploy -cf - . | ssh -i "$HOME/.ssh/deploy" -o IdentitiesOnly=yes "$DEPLOY_USER@$DEPLOY_HOST" \
+            "tar -C /home/crm/personal-crm/deploy -xf -"
           printf '%s\n' "$GHCR_TOKEN" | ssh -i "$HOME/.ssh/deploy" -o IdentitiesOnly=yes "$DEPLOY_USER@$DEPLOY_HOST" \
             "export HOME=/home/crm DOCKER_CONFIG=/home/crm/.docker; docker login ghcr.io -u $GHCR_USER --password-stdin"
           ssh -i "$HOME/.ssh/deploy" -o IdentitiesOnly=yes "$DEPLOY_USER@$DEPLOY_HOST" \
