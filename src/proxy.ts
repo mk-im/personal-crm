@@ -1,7 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import postgres from "postgres";
 
-const contactPath = /^\/contacts\/(\d+)$/;
+import { resolveContactPage } from "@/lib/contact-access";
+
 const SESSION_COOKIE = "better-auth.session_token";
 
 // Open without a session: the sign-in pages, the link from the letter, and the deploy check.
@@ -64,19 +65,14 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  const match = contactPath.exec(pathname);
+  const access = await resolveContactPage(pathname, async (contactId) => {
+    const rows = await database()`
+      select id from contacts where id = ${contactId} and user_id = ${userId} limit 1
+    `;
+    return rows.length > 0;
+  });
 
-  if (!match) {
-    return NextResponse.next();
-  }
-
-  // Someone else's contact and a missing one both get the same 404 page.
-  const contactId = Number(match[1]);
-  const rows = await database()`
-    select id from contacts where id = ${contactId} and user_id = ${userId} limit 1
-  `;
-
-  if (rows.length > 0) {
+  if (access === "continue") {
     return NextResponse.next();
   }
 
