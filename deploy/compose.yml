@@ -23,7 +23,7 @@ services:
   migrate:
     image: ${APP_IMAGE}
     env_file: /home/crm/personal-crm/.env
-    command: ["./node_modules/.bin/drizzle-kit", "migrate"]
+    command: ["./node_modules/.bin/tsx", "src/db/migrate.ts"]
     depends_on:
       postgres:
         condition: service_healthy

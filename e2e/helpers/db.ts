@@ -10,7 +10,8 @@ function sqlClient() {
   return postgres(url, { max: 1 });
 }
 
-export async function markContactMostOverdue(name: string) {
+// Only this owner's contacts are looked at; other users' rows stay untouched.
+export async function markContactMostOverdue(ownerEmail: string, name: string) {
   const sql = sqlClient();
 
   try {
@@ -22,23 +23,25 @@ export async function markContactMostOverdue(name: string) {
         )
       ) as at
       from contacts
-      where contacts.keep_in_touch_frequency is not null
+      join "user" on "user".id = contacts.user_id
+      where "user".email = ${ownerEmail}
+        and contacts.keep_in_touch_frequency is not null
         and contacts.name <> ${name}
     `;
     const baseline = earliest?.at ? new Date(earliest.at).getTime() : Date.now();
     const daysAgo = Math.ceil((Date.now() - baseline) / (24 * 60 * 60 * 1000)) + 400;
 
-    await shiftContactConversation(sql, name, daysAgo);
+    await shiftContactConversation(sql, ownerEmail, name, daysAgo);
   } finally {
     await sql.end();
   }
 }
 
-export async function markContactOverdue(name: string, daysAgo: number) {
+export async function markContactOverdue(ownerEmail: string, name: string, daysAgo: number) {
   const sql = sqlClient();
 
   try {
-    await shiftContactConversation(sql, name, daysAgo);
+    await shiftContactConversation(sql, ownerEmail, name, daysAgo);
   } finally {
     await sql.end();
   }
@@ -46,6 +49,7 @@ export async function markContactOverdue(name: string, daysAgo: number) {
 
 async function shiftContactConversation(
   sql: ReturnType<typeof sqlClient>,
+  ownerEmail: string,
   name: string,
   daysAgo: number,
 ) {
@@ -54,6 +58,7 @@ async function shiftContactConversation(
     update contacts
     set keep_in_touch_set_at = ${setAt}
     where name = ${name}
+      and user_id = (select id from "user" where email = ${ownerEmail})
     returning id
   `;
 

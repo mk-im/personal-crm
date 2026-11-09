@@ -3,9 +3,10 @@ import { Suspense } from "react";
 
 import { ContactForm } from "@/components/contact-form";
 import { listGroups } from "@/db/queries";
+import { requireUserId } from "@/lib/session";
 
 async function NewContactContent() {
-  const groups = await listGroups();
+  const groups = await listGroups(await requireUserId());
 
   return (
     <div className="flex flex-col gap-4">

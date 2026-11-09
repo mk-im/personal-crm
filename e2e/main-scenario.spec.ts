@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
+import { ownerEmail, signIn } from "./helpers/auth";
 import { markContactMostOverdue } from "./helpers/db";
 
 const stamp = Date.now();
@@ -20,6 +21,8 @@ async function chooseFrequency(page: Page, label: string) {
 }
 
 test("main scenario from product idea", async ({ page, browser }) => {
+  // The owner signs in first; everything below is that user's data.
+  await signIn(page, ownerEmail);
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Контакты" })).toBeVisible();
   await expect(page.getByText(/Всего \d+ контакт/)).toBeVisible();
@@ -52,15 +55,18 @@ test("main scenario from product idea", async ({ page, browser }) => {
   await expect(page.getByText(editedThrough)).toBeVisible();
   await expect(page.getByText("Раз в неделю")).toBeVisible();
 
-  const other = await browser.newContext();
+  // The same signed-in person in another browser sees the same contacts.
+  // The session is carried over instead of a second letter, so reruns stay under the letter limit.
+  const contactPageUrl = page.url();
+  const other = await browser.newContext({ storageState: await page.context().storageState() });
   const otherPage = await other.newPage();
-  await otherPage.goto(page.url());
+  await otherPage.goto(contactPageUrl);
   await expect(otherPage.getByRole("heading", { name: contactName })).toBeVisible();
   await expect(otherPage.getByText(noteText)).toBeVisible();
   await expect(otherPage.getByText(editedPhone)).toBeVisible();
   await other.close();
 
-  await markContactMostOverdue(contactName);
+  await markContactMostOverdue(ownerEmail, contactName);
   await page.goto("/");
   const due = page.getByRole("region", { name: "Пора связаться" });
   await expect(due).toBeVisible();

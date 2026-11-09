@@ -9,6 +9,7 @@ import { getContact } from "@/db/queries";
 import { avatarTone, contactInitials } from "@/lib/contact-style";
 import { groupCardLabel } from "@/lib/groups";
 import { KEEP_IN_TOUCH_FIELD_LABEL, KEEP_IN_TOUCH_LABELS } from "@/lib/keep-in-touch";
+import { requireUserId } from "@/lib/session";
 
 const dateFormat = new Intl.DateTimeFormat("ru-RU", {
   dateStyle: "medium",
@@ -53,7 +54,7 @@ export async function ContactCard({ params }: { params: Promise<{ id: string }> 
     notFound();
   }
 
-  const result = await getContact(contactId);
+  const result = await getContact(await requireUserId(), contactId);
 
   if (!result) {
     notFound();

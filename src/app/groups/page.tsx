@@ -3,9 +3,10 @@ import { Suspense } from "react";
 
 import { GroupsManager } from "@/components/groups-manager";
 import { listGroups } from "@/db/queries";
+import { requireUserId } from "@/lib/session";
 
 async function GroupsContent() {
-  const groups = await listGroups();
+  const groups = await listGroups(await requireUserId());
 
   return (
     <div className="flex flex-col gap-6">

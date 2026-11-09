@@ -4,9 +4,10 @@ import { Avatar } from "@/components/avatar";
 import { listDueContacts } from "@/db/queries";
 import { avatarTone, contactInitials } from "@/lib/contact-style";
 import { KEEP_IN_TOUCH_LABELS, overdueDaysPhrase } from "@/lib/keep-in-touch";
+import { requireUserId } from "@/lib/session";
 
 export async function DueContacts() {
-  const due = await listDueContacts();
+  const due = await listDueContacts(await requireUserId());
 
   if (due.length === 0) {
     return null;

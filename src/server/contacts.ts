@@ -1,6 +1,6 @@
 "use server";
 
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect, unstable_rethrow } from "next/navigation";
 
@@ -8,6 +8,7 @@ import { db } from "@/db";
 import { contactGroups, contacts, groups, notes } from "@/db/schema";
 import { planMembership } from "@/lib/groups";
 import { readKeepInTouchFrequency } from "@/lib/keep-in-touch";
+import { requireUserId } from "@/lib/session";
 
 export type ActionState = {
   error?: string;
@@ -15,14 +16,17 @@ export type ActionState = {
 
 const SAVE_FAILED = "Не получилось сохранить";
 const DELETE_FAILED = "Не получилось удалить";
+const CONTACT_NOT_FOUND = "Контакт не найден";
 
 async function runContactAction(
   action: string,
   failedMessage: string,
-  work: () => Promise<ActionState>,
+  work: (userId: string) => Promise<ActionState>,
 ): Promise<ActionState> {
   try {
-    return await work();
+    // No session: requireUserId redirects to the sign-in page before any data is touched.
+    const userId = await requireUserId();
+    return await work(userId);
   } catch (error) {
     unstable_rethrow(error);
     console.error(`${action} failed`);
@@ -42,8 +46,22 @@ function readGroupIds(formData: FormData) {
   });
 }
 
+// Someone else's contact looks exactly like a missing one.
+async function findOwnContact(userId: string, id: number) {
+  const [existing] = await db
+    .select({
+      id: contacts.id,
+      keepInTouchFrequency: contacts.keepInTouchFrequency,
+    })
+    .from(contacts)
+    .where(and(eq(contacts.userId, userId), eq(contacts.id, id)))
+    .limit(1);
+
+  return existing ?? null;
+}
+
 export async function createContact(_state: ActionState, formData: FormData): Promise<ActionState> {
-  return runContactAction("createContact", SAVE_FAILED, async () => {
+  return runContactAction("createContact", SAVE_FAILED, async (userId) => {
     const name = String(formData.get("name") ?? "").trim();
 
     if (!name) {
@@ -57,7 +75,10 @@ export async function createContact(_state: ActionState, formData: FormData): Pr
     }
 
     const created = await db.transaction(async (tx) => {
-      const existingGroups = await tx.select({ id: groups.id }).from(groups);
+      const existingGroups = await tx
+        .select({ id: groups.id })
+        .from(groups)
+        .where(eq(groups.userId, userId));
       const plan = planMembership(
         readGroupIds(formData),
         existingGroups.map((group) => group.id),
@@ -70,6 +91,7 @@ export async function createContact(_state: ActionState, formData: FormData): Pr
       const [row] = await tx
         .insert(contacts)
         .values({
+          userId,
           name,
           metThrough: optionalText(formData, "metThrough"),
           phone: optionalText(formData, "phone"),
@@ -100,12 +122,12 @@ export async function createContact(_state: ActionState, formData: FormData): Pr
 }
 
 export async function updateContact(_state: ActionState, formData: FormData): Promise<ActionState> {
-  return runContactAction("updateContact", SAVE_FAILED, async () => {
+  return runContactAction("updateContact", SAVE_FAILED, async (userId) => {
     const id = Number(formData.get("id"));
     const name = String(formData.get("name") ?? "").trim();
 
     if (!Number.isInteger(id) || id <= 0) {
-      return { error: "Контакт не найден" };
+      return { error: CONTACT_NOT_FOUND };
     }
 
     if (!name) {
@@ -118,23 +140,19 @@ export async function updateContact(_state: ActionState, formData: FormData): Pr
       return { error: "Выберите частоту" };
     }
 
-    const [existing] = await db
-      .select({
-        id: contacts.id,
-        keepInTouchFrequency: contacts.keepInTouchFrequency,
-      })
-      .from(contacts)
-      .where(eq(contacts.id, id))
-      .limit(1);
+    const existing = await findOwnContact(userId, id);
 
     if (!existing) {
-      return { error: "Контакт не найден" };
+      return { error: CONTACT_NOT_FOUND };
     }
 
     const frequencyChanged = existing.keepInTouchFrequency !== frequency.value;
 
     const saved = await db.transaction(async (tx) => {
-      const existingGroups = await tx.select({ id: groups.id }).from(groups);
+      const existingGroups = await tx
+        .select({ id: groups.id })
+        .from(groups)
+        .where(eq(groups.userId, userId));
       const plan = planMembership(
         readGroupIds(formData),
         existingGroups.map((group) => group.id),
@@ -158,7 +176,7 @@ export async function updateContact(_state: ActionState, formData: FormData): Pr
               : { keepInTouchFrequency: null, keepInTouchSetAt: null }
             : {}),
         })
-        .where(eq(contacts.id, id));
+        .where(and(eq(contacts.userId, userId), eq(contacts.id, id)));
 
       await tx.delete(contactGroups).where(eq(contactGroups.contactId, id));
 
@@ -184,26 +202,22 @@ export async function updateContact(_state: ActionState, formData: FormData): Pr
 }
 
 export async function addNote(_state: ActionState, formData: FormData): Promise<ActionState> {
-  return runContactAction("addNote", SAVE_FAILED, async () => {
+  return runContactAction("addNote", SAVE_FAILED, async (userId) => {
     const contactId = Number(formData.get("contactId"));
     const body = String(formData.get("body") ?? "").trim();
 
     if (!Number.isInteger(contactId) || contactId <= 0) {
-      return { error: "Контакт не найден" };
+      return { error: CONTACT_NOT_FOUND };
     }
 
     if (!body) {
       return { error: "Напишите заметку" };
     }
 
-    const [existing] = await db
-      .select({ id: contacts.id })
-      .from(contacts)
-      .where(eq(contacts.id, contactId))
-      .limit(1);
+    const existing = await findOwnContact(userId, contactId);
 
     if (!existing) {
-      return { error: "Контакт не найден" };
+      return { error: CONTACT_NOT_FOUND };
     }
 
     await db.insert(notes).values({ contactId, body });
@@ -214,24 +228,20 @@ export async function addNote(_state: ActionState, formData: FormData): Promise<
 }
 
 export async function deleteContact(_state: ActionState, formData: FormData): Promise<ActionState> {
-  return runContactAction("deleteContact", DELETE_FAILED, async () => {
+  return runContactAction("deleteContact", DELETE_FAILED, async (userId) => {
     const id = Number(formData.get("id"));
 
     if (!Number.isInteger(id) || id <= 0) {
-      return { error: "Контакт не найден" };
+      return { error: CONTACT_NOT_FOUND };
     }
 
-    const [existing] = await db
-      .select({ id: contacts.id })
-      .from(contacts)
-      .where(eq(contacts.id, id))
-      .limit(1);
+    const existing = await findOwnContact(userId, id);
 
     if (!existing) {
-      return { error: "Контакт не найден" };
+      return { error: CONTACT_NOT_FOUND };
     }
 
-    await db.delete(contacts).where(eq(contacts.id, id));
+    await db.delete(contacts).where(and(eq(contacts.userId, userId), eq(contacts.id, id)));
     revalidatePath("/");
     revalidatePath("/groups");
     revalidatePath(`/contacts/${id}`);
