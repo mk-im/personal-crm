@@ -232,6 +232,40 @@ describe("buildHomeView labels and search", () => {
 
     expect(view.showDueBlock).toBe(false);
   });
+
+  it("Birthday block shows when someone has a birthday soon", () => {
+    const view = buildHomeView({
+      contacts: [person(10, "Аня")],
+      groups: [family],
+      memberships: [membership(10, family.id)],
+      hasUpcomingBirthdays: true,
+    });
+
+    expect(view.showBirthdayBlock).toBe(true);
+  });
+
+  it("Birthday block hides when nobody has a birthday soon", () => {
+    const view = buildHomeView({
+      contacts: [person(10, "Аня")],
+      groups: [family],
+      memberships: [membership(10, family.id)],
+      hasUpcomingBirthdays: false,
+    });
+
+    expect(view.showBirthdayBlock).toBe(false);
+  });
+
+  it("Birthday block hides during search", () => {
+    const view = buildHomeView({
+      contacts: [person(10, "Аня")],
+      groups: [family],
+      memberships: [membership(10, family.id)],
+      query: "Аня",
+      hasUpcomingBirthdays: true,
+    });
+
+    expect(view.showBirthdayBlock).toBe(false);
+  });
 });
 
 describe("membership", () => {

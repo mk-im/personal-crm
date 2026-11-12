@@ -22,6 +22,7 @@ export type ContactFormValues = {
   phone: string | null;
   email: string | null;
   agreement: string | null;
+  birthDate: string | null;
   keepInTouchFrequency: KeepInTouchFrequency | null;
   groupIds: number[];
 };
@@ -152,6 +153,15 @@ export function ContactForm({
           type="tel"
           autoComplete="tel"
           defaultValue={contact?.phone ?? ""}
+          className={fieldControlClass}
+        />
+      </Field>
+      <Field id="birthDate" label="Дата рождения">
+        <Input
+          id="birthDate"
+          name="birthDate"
+          type="date"
+          defaultValue={contact?.birthDate ?? ""}
           className={fieldControlClass}
         />
       </Field>

@@ -1,5 +1,6 @@
 import { and, asc, desc, eq, ilike, inArray, isNotNull, sql } from "drizzle-orm";
 
+import { moscowToday, upcomingBirthdays, type UpcomingBirthday } from "@/lib/birthdays";
 import { dueContacts, isKeepInTouchFrequency, type DueContact } from "@/lib/keep-in-touch";
 
 import { db } from "./index";
@@ -49,7 +50,28 @@ export async function listMemberships(userId: string, contactIds: number[]) {
     .where(and(eq(contacts.userId, userId), inArray(contactGroups.contactId, contactIds)));
 }
 
-export type { DueContact };
+export type { DueContact, UpcomingBirthday };
+
+export async function listUpcomingBirthdays(
+  userId: string,
+  today = moscowToday(),
+): Promise<UpcomingBirthday[]> {
+  const rows = await db
+    .select({
+      id: contacts.id,
+      name: contacts.name,
+      birthDate: contacts.birthDate,
+    })
+    .from(contacts)
+    .where(and(eq(contacts.userId, userId), isNotNull(contacts.birthDate)));
+
+  return upcomingBirthdays(
+    rows.flatMap((row) =>
+      row.birthDate ? [{ id: row.id, name: row.name, birthDate: row.birthDate }] : [],
+    ),
+    today,
+  );
+}
 
 export async function listDueContacts(userId: string): Promise<DueContact[]> {
   const rows = await db

@@ -14,6 +14,7 @@ function contactFormKey(contact: {
   phone: string | null;
   email: string | null;
   agreement: string | null;
+  birthDate: string | null;
   keepInTouchFrequency: string | null;
   groupIds: number[];
 }) {
@@ -24,6 +25,7 @@ function contactFormKey(contact: {
     contact.phone ?? "",
     contact.email ?? "",
     contact.agreement ?? "",
+    contact.birthDate ?? "",
     contact.keepInTouchFrequency ?? "",
     contact.groupIds.join(","),
   ].join("|");
