@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   boolean,
+  date,
   index,
   integer,
   pgTable,
@@ -101,6 +102,7 @@ export const contacts = pgTable(
     phone: text("phone"),
     email: text("email"),
     agreement: text("agreement"),
+    birthDate: date("birth_date"),
     keepInTouchFrequency: text("keep_in_touch_frequency").$type<KeepInTouchFrequency>(),
     keepInTouchSetAt: timestamp("keep_in_touch_set_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

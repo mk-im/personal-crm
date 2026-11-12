@@ -6,6 +6,7 @@ import { redirect, unstable_rethrow } from "next/navigation";
 
 import { db } from "@/db";
 import { contactGroups, contacts, groups, notes } from "@/db/schema";
+import { readBirthDate } from "@/lib/birthdays";
 import { planMembership } from "@/lib/groups";
 import { readKeepInTouchFrequency } from "@/lib/keep-in-touch";
 import { requireUserId } from "@/lib/session";
@@ -74,6 +75,12 @@ export async function createContact(_state: ActionState, formData: FormData): Pr
       return { error: "Выберите частоту" };
     }
 
+    const birthDate = readBirthDate(formData);
+
+    if (!birthDate.ok) {
+      return { error: SAVE_FAILED };
+    }
+
     const created = await db.transaction(async (tx) => {
       const existingGroups = await tx
         .select({ id: groups.id })
@@ -97,6 +104,7 @@ export async function createContact(_state: ActionState, formData: FormData): Pr
           phone: optionalText(formData, "phone"),
           email: optionalText(formData, "email"),
           agreement: optionalText(formData, "agreement"),
+          birthDate: birthDate.value,
           keepInTouchFrequency: frequency.value,
           keepInTouchSetAt: frequency.value ? new Date() : null,
         })
@@ -140,6 +148,12 @@ export async function updateContact(_state: ActionState, formData: FormData): Pr
       return { error: "Выберите частоту" };
     }
 
+    const birthDate = readBirthDate(formData);
+
+    if (!birthDate.ok) {
+      return { error: SAVE_FAILED };
+    }
+
     const existing = await findOwnContact(userId, id);
 
     if (!existing) {
@@ -170,6 +184,7 @@ export async function updateContact(_state: ActionState, formData: FormData): Pr
           phone: optionalText(formData, "phone"),
           email: optionalText(formData, "email"),
           agreement: optionalText(formData, "agreement"),
+          birthDate: birthDate.value,
           ...(frequencyChanged
             ? frequency.value
               ? { keepInTouchFrequency: frequency.value, keepInTouchSetAt: new Date() }

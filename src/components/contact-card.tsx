@@ -8,6 +8,7 @@ import { RefreshOnMount } from "@/components/refresh-on-mount";
 import { getContact } from "@/db/queries";
 import { avatarTone, contactInitials } from "@/lib/contact-style";
 import { groupCardLabel } from "@/lib/groups";
+import { formatBirthDate } from "@/lib/birthdays";
 import { KEEP_IN_TOUCH_FIELD_LABEL, KEEP_IN_TOUCH_LABELS } from "@/lib/keep-in-touch";
 import { requireUserId } from "@/lib/session";
 
@@ -91,6 +92,9 @@ export async function ContactCard({ params }: { params: Promise<{ id: string }> 
         <dl className="mt-3.5 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:mt-4.5 lg:gap-2.5">
           <Field label="Телефон" value={contact.phone} />
           <Field label="Почта" value={contact.email} />
+          {contact.birthDate ? (
+            <Field label="Дата рождения" value={formatBirthDate(contact.birthDate)} />
+          ) : null}
           <Field label="Откуда знакомы" value={contact.metThrough} wide />
           <Field label="О чём договорились" value={contact.agreement} wide />
           {contact.keepInTouchFrequency ? (

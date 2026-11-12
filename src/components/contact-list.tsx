@@ -3,10 +3,17 @@ import Link from "next/link";
 import { Avatar } from "@/components/avatar";
 import { CtaLink } from "@/components/cta-link";
 import { DueContacts } from "@/components/due-contacts";
+import { UpcomingBirthdays } from "@/components/upcoming-birthdays";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { listContacts, listDueContacts, listGroups, listMemberships } from "@/db/queries";
+import {
+  listContacts,
+  listDueContacts,
+  listGroups,
+  listMemberships,
+  listUpcomingBirthdays,
+} from "@/db/queries";
 import { avatarTone, contactInitials } from "@/lib/contact-style";
 import { buildHomeView, groupRowLabel } from "@/lib/groups";
 import { requireUserId } from "@/lib/session";
@@ -30,10 +37,11 @@ export async function ContactList({ searchParams }: { searchParams: Promise<{ q?
   const { q } = await searchParams;
   const query = (q ?? "").trim();
   const userId = await requireUserId();
-  const [contacts, groups, due] = await Promise.all([
+  const [contacts, groups, due, birthdays] = await Promise.all([
     listContacts(userId, query),
     listGroups(userId),
     query ? Promise.resolve([]) : listDueContacts(userId),
+    query ? Promise.resolve([]) : listUpcomingBirthdays(userId),
   ]);
   const memberships = await listMemberships(
     userId,
@@ -45,6 +53,7 @@ export async function ContactList({ searchParams }: { searchParams: Promise<{ q?
     memberships,
     query,
     hasDueContacts: due.length > 0,
+    hasUpcomingBirthdays: birthdays.length > 0,
   });
 
   return (
@@ -88,6 +97,7 @@ export async function ContactList({ searchParams }: { searchParams: Promise<{ q?
         </div>
       </form>
 
+      {view.showBirthdayBlock ? <UpcomingBirthdays /> : null}
       {view.showDueBlock ? <DueContacts /> : null}
 
       {view.sections.length === 0 ? (

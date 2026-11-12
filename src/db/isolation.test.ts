@@ -2,10 +2,18 @@ import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { db } from "./index";
-import { getContact, listContacts, listDueContacts, listGroups, listMemberships } from "./queries";
+import {
+  getContact,
+  listContacts,
+  listDueContacts,
+  listGroups,
+  listMemberships,
+  listUpcomingBirthdays,
+} from "./queries";
 import { contactGroups, contacts, groups, notes } from "./schema";
+import { formatBirthDate, moscowToday } from "@/lib/birthdays";
 import { DUPLICATE_GROUP_NAME_ERROR } from "@/lib/groups";
-import { addNote, deleteContact, updateContact } from "@/server/contacts";
+import { addNote, createContact, deleteContact, updateContact } from "@/server/contacts";
 import { createGroup, deleteGroup, renameGroup } from "@/server/groups";
 import { createTestUser, deleteTestUsers } from "@/test/db";
 import { currentUserId, expectRedirect, formData } from "@/test/next-mocks";
@@ -121,5 +129,109 @@ describe("isolation between users", () => {
 
     expect(ownDue.map((row) => row.id)).toContain(aliceContactId);
     expect(otherDue).toEqual([]);
+  });
+});
+
+async function savedContact(name: string, birthDate: string) {
+  currentUserId.value = alice.id;
+  const location = await expectRedirect(
+    createContact({}, formData({ name, birthDate, keepInTouchFrequency: "" })),
+  );
+  const id = Number(location.split("/").pop());
+  const card = await getContact(alice.id, id);
+
+  return { id, card };
+}
+
+describe("birth dates", () => {
+  it("saves a date and shows it on the card", async () => {
+    const { card } = await savedContact("С датой", "1990-05-15");
+
+    expect(card?.contact.birthDate).toBe("1990-05-15");
+    expect(formatBirthDate(card?.contact.birthDate ?? null)).toBe("15 мая 1990 г.");
+  });
+
+  it("leaves the date empty and out of the birthday block", async () => {
+    const { id, card } = await savedContact("Без даты", "");
+
+    expect(card?.contact.birthDate).toBeNull();
+    expect(formatBirthDate(null)).toBeNull();
+    expect((await listUpcomingBirthdays(alice.id)).map((row) => row.id)).not.toContain(id);
+  });
+
+  it("changes the date", async () => {
+    const { id } = await savedContact("Смена даты", "1990-05-15");
+
+    currentUserId.value = alice.id;
+    await expectRedirect(
+      updateContact(
+        {},
+        formData({
+          id: String(id),
+          name: "Смена даты",
+          birthDate: "1991-06-16",
+          keepInTouchFrequency: "",
+        }),
+      ),
+    );
+
+    const card = await getContact(alice.id, id);
+    expect(formatBirthDate(card?.contact.birthDate ?? null)).toBe("16 июня 1991 г.");
+  });
+
+  it("clears the date and drops the contact from the birthday block", async () => {
+    const today = moscowToday();
+    const { id } = await savedContact("Очистить дату", today);
+
+    expect((await listUpcomingBirthdays(alice.id)).map((row) => row.id)).toContain(id);
+
+    currentUserId.value = alice.id;
+    await expectRedirect(
+      updateContact(
+        {},
+        formData({
+          id: String(id),
+          name: "Очистить дату",
+          birthDate: "",
+          keepInTouchFrequency: "",
+        }),
+      ),
+    );
+
+    const card = await getContact(alice.id, id);
+    expect(card?.contact.birthDate).toBeNull();
+    expect((await listUpcomingBirthdays(alice.id)).map((row) => row.id)).not.toContain(id);
+  });
+
+  it("rejects a date that does not exist and keeps the previous contact", async () => {
+    const { id } = await savedContact("Апрель", "1990-04-15");
+
+    currentUserId.value = alice.id;
+    const updated = await updateContact(
+      {},
+      formData({
+        id: String(id),
+        name: "Новое имя",
+        birthDate: "1990-04-31",
+        keepInTouchFrequency: "",
+      }),
+    );
+
+    expect(updated).toEqual({ error: "Не получилось сохранить" });
+    const card = await getContact(alice.id, id);
+    expect(card?.contact.name).toBe("Апрель");
+    expect(card?.contact.birthDate).toBe("1990-04-15");
+  });
+
+  it("keeps another person's birthday out of my block", async () => {
+    const [bobContact] = await db
+      .insert(contacts)
+      .values({ userId: bob.id, name: "Чужой день", birthDate: moscowToday() })
+      .returning({ id: contacts.id });
+
+    expect((await listUpcomingBirthdays(alice.id)).map((row) => row.id)).not.toContain(
+      bobContact.id,
+    );
+    expect((await listUpcomingBirthdays(bob.id)).map((row) => row.id)).toContain(bobContact.id);
   });
 });

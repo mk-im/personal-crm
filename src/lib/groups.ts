@@ -34,6 +34,7 @@ export type HomeView = {
   sections: HomeSection[];
   groups: GroupRecord[];
   count: number;
+  showBirthdayBlock: boolean;
   showDueBlock: boolean;
 };
 
@@ -68,6 +69,7 @@ export function buildHomeView(input: {
   memberships: readonly Membership[];
   query?: string;
   hasDueContacts?: boolean;
+  hasUpcomingBirthdays?: boolean;
 }): HomeView {
   const query = input.query ?? "";
   const contacts = input.contacts.filter((contact) => matchesName(contact.name, query));
@@ -115,6 +117,7 @@ export function buildHomeView(input: {
     sections,
     groups,
     count: contacts.length,
+    showBirthdayBlock: Boolean(input.hasUpcomingBirthdays) && query.trim().length === 0,
     showDueBlock: Boolean(input.hasDueContacts) && query.trim().length === 0,
   };
 }
