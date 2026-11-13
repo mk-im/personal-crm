@@ -37,12 +37,12 @@ async function setFrequency(page: Page, label: string) {
 
 async function expectAbsentFromDueBlock(page: Page, name: string) {
   await page.goto("/");
+  await expect(page.getByRole("heading", { name: "Контакты" })).toBeVisible();
+  // The due block streams in after the heading. An empty region on the first
+  // paint is not proof this person stays out of the block.
+  await page.waitForLoadState("networkidle");
+
   const due = page.getByRole("region", { name: "Пора связаться" });
-
-  if ((await due.count()) === 0) {
-    return;
-  }
-
   await expect(due.getByRole("link", { name: new RegExp(name) })).toHaveCount(0);
 }
 
@@ -87,6 +87,8 @@ test("overdue contact appears in the due block", async ({ page }) => {
   await expect(page.getByRole("heading", { name })).toBeVisible();
 
   await page.goto(`/?q=${encodeURIComponent(name)}`);
+  await expect(page.getByRole("heading", { name: "Контакты" })).toBeVisible();
+  await page.waitForLoadState("networkidle");
   await expect(page.getByRole("region", { name: "Пора связаться" })).toHaveCount(0);
   await expect(page.getByRole("link", { name: new RegExp(name) }).first()).toBeVisible();
 });

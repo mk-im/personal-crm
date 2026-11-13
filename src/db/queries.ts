@@ -80,8 +80,11 @@ export async function listDueContacts(userId: string): Promise<DueContact[]> {
       name: contacts.name,
       frequency: contacts.keepInTouchFrequency,
       frequencySetAt: contacts.keepInTouchSetAt,
+      // Drizzle drops table names inside sql`` when the outer query uses one table.
+      // "contact_id" = "id" then reads as notes.contact_id = notes.id, so every
+      // person gets one shared note instead of their own latest one.
       latestNoteAt: sql<Date | string | null>`(
-        select max(${notes.createdAt}) from ${notes} where ${notes.contactId} = ${contacts.id}
+        select max(notes.created_at) from notes where notes.contact_id = contacts.id
       )`,
     })
     .from(contacts)
