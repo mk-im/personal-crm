@@ -130,6 +130,38 @@ describe("isolation between users", () => {
     expect(ownDue.map((row) => row.id)).toContain(aliceContactId);
     expect(otherDue).toEqual([]);
   });
+
+  it("uses each person's own latest note for the due date", async () => {
+    const longAgo = new Date(Date.now() - 40 * 24 * 60 * 60 * 1000);
+    const [stale] = await db
+      .insert(contacts)
+      .values({
+        userId: alice.id,
+        name: "Старый срок",
+        keepInTouchFrequency: "weekly",
+        keepInTouchSetAt: longAgo,
+      })
+      .returning({ id: contacts.id });
+    const [fresh] = await db
+      .insert(contacts)
+      .values({
+        userId: alice.id,
+        name: "Свежая заметка",
+        keepInTouchFrequency: "weekly",
+        keepInTouchSetAt: longAgo,
+      })
+      .returning({ id: contacts.id });
+
+    await db.insert(notes).values([
+      { contactId: stale.id, body: "Давно", createdAt: longAgo },
+      { contactId: fresh.id, body: "Только что", createdAt: new Date() },
+    ]);
+
+    const dueIds = (await listDueContacts(alice.id)).map((row) => row.id);
+
+    expect(dueIds).toContain(stale.id);
+    expect(dueIds).not.toContain(fresh.id);
+  });
 });
 
 async function savedContact(name: string, birthDate: string) {
