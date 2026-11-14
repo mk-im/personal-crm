@@ -30,6 +30,7 @@ COPY --from=builder /app/drizzle.config.ts ./drizzle.config.ts
 COPY --from=builder /app/src/db ./src/db
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/node_modules ./node_modules
+COPY hide-software-headers.cjs ./hide-software-headers.cjs
 
 EXPOSE 3000
-CMD ["node", "server.js"]
+CMD ["node", "--require", "./hide-software-headers.cjs", "server.js"]
