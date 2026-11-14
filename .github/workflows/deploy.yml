@@ -4,19 +4,15 @@ on:
   push:
     branches: [main]
 
-concurrency:
-  group: deploy-main
-  cancel-in-progress: false
-
 permissions:
   contents: read
   packages: write
 
 jobs:
-  deploy:
+  image:
     runs-on: ubuntu-latest
-    env:
-      APP_IMAGE: ghcr.io/${{ github.repository }}:${{ github.sha }}
+    outputs:
+      image: ${{ steps.tag.outputs.image }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -31,17 +27,35 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Image tag
+        id: tag
+        run: echo "image=ghcr.io/${{ github.repository }}:${{ github.sha }}" >> "$GITHUB_OUTPUT"
+
       - name: Build and push image
         uses: docker/build-push-action@v7
         with:
           context: .
           push: true
-          tags: ${{ env.APP_IMAGE }}
+          tags: ${{ steps.tag.outputs.image }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+  # Job name is read by Deploy prod. Do not rename it.
+  deploy-staging:
+    name: Deploy staging
+    needs: image
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-staging
+      cancel-in-progress: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
       - name: Copy scripts and release
         env:
+          APP_IMAGE: ${{ needs.image.outputs.image }}
+          APP_ENV: staging
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
@@ -49,21 +63,4 @@ jobs:
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          if [[ -z "${DEPLOY_HOST:-}" || -z "${DEPLOY_USER:-}" || -z "${DEPLOY_SSH_KEY:-}" ]]; then
-            echo "Missing DEPLOY_HOST, DEPLOY_USER or DEPLOY_SSH_KEY" >&2
-            exit 1
-          fi
-          mkdir -p "$HOME/.ssh"
-          install -m 600 /dev/null "$HOME/.ssh/deploy"
-          printf '%s\n' "$DEPLOY_SSH_KEY" > "$HOME/.ssh/deploy"
-          ssh-keyscan -H "$DEPLOY_HOST" >> "$HOME/.ssh/known_hosts"
-          ssh -i "$HOME/.ssh/deploy" -o IdentitiesOnly=yes "$DEPLOY_USER@$DEPLOY_HOST" \
-            "mkdir -p /home/crm/personal-crm/deploy /home/crm/.docker"
-          tar -C deploy -cf - . | ssh -i "$HOME/.ssh/deploy" -o IdentitiesOnly=yes "$DEPLOY_USER@$DEPLOY_HOST" \
-            "tar -C /home/crm/personal-crm/deploy -xf -"
-          printf '%s\n' "$GHCR_TOKEN" | ssh -i "$HOME/.ssh/deploy" -o IdentitiesOnly=yes "$DEPLOY_USER@$DEPLOY_HOST" \
-            "export HOME=/home/crm DOCKER_CONFIG=/home/crm/.docker; docker login ghcr.io -u $GHCR_USER --password-stdin"
-          ssh -i "$HOME/.ssh/deploy" -o IdentitiesOnly=yes "$DEPLOY_USER@$DEPLOY_HOST" \
-            "chmod +x /home/crm/personal-crm/deploy/*.sh && export HOME=/home/crm DOCKER_CONFIG=/home/crm/.docker && APP_IMAGE=$APP_IMAGE /home/crm/personal-crm/deploy/release.sh"
-          ssh -i "$HOME/.ssh/deploy" -o IdentitiesOnly=yes "$DEPLOY_USER@$DEPLOY_HOST" \
-            "export HOME=/home/crm DOCKER_CONFIG=/home/crm/.docker; docker logout ghcr.io || true"
+          bash deploy/ci-release.sh

@@ -31,7 +31,8 @@ fi
 
 # shellcheck source=lib.sh
 source "$ROOT/deploy/lib.sh"
-COMPOSE=(docker compose -p prod -f "$ROOT/deploy/compose.yml" --env-file "$ROOT/.env")
+configure_runtime prod
+COMPOSE=(docker compose -p prod -f "$ROOT/deploy/compose.yml" --env-file "$ENV_FILE")
 
 db="$(read_env POSTGRES_DB)"
 user="$(read_env POSTGRES_USER)"

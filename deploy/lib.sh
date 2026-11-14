@@ -2,9 +2,39 @@
 
 read_env() {
   local key="$1"
+  local file="${ENV_FILE:-$ROOT/.env}"
   local line
-  line="$(grep -E "^${key}=" "$ROOT/.env" | tail -n 1 || true)"
+  line="$(grep -E "^${key}=" "$file" | tail -n 1 || true)"
   printf '%s' "${line#*=}" | tr -d '\r'
+}
+
+# APP_ENV is prod or staging. The compose file reads the exported values.
+configure_runtime() {
+  local env_name="${1:-${APP_ENV:-prod}}"
+  case "$env_name" in
+    prod)
+      ENV_ROOT="/home/crm/personal-crm"
+      APP_PORT="3000"
+      POSTGRES_VOLUME="prod_prod_postgres"
+      APP_MEMORY="512m"
+      POSTGRES_MEMORY="256m"
+      ;;
+    staging)
+      ENV_ROOT="/home/crm/personal-crm-staging"
+      APP_PORT="3001"
+      POSTGRES_VOLUME="staging_postgres"
+      APP_MEMORY="256m"
+      POSTGRES_MEMORY="128m"
+      ;;
+    *)
+      echo "APP_ENV must be prod or staging" >&2
+      return 1
+      ;;
+  esac
+  export APP_ENV="$env_name"
+  export ENV_ROOT APP_PORT POSTGRES_VOLUME APP_MEMORY POSTGRES_MEMORY
+  export ENV_FILE="${ENV_ROOT}/.env"
+  export SMOKE_URL="http://127.0.0.1:${APP_PORT}/health"
 }
 
 require_identifier() {

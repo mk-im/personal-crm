@@ -1,12 +1,29 @@
 #!/usr/bin/env bash
-# Dump the prod database to /home/crm/personal-crm/backups/<version>_<UTC time>.dump.
-# <version> is the image tag of the app that is running now.
+# Dump the prod database.
+# BACKUP_KIND=deploy (default) runs before a prod release.
+# BACKUP_KIND=daily is the nightly copy.
+# Each kind keeps its 7 newest files. Files without these prefixes are not deleted.
 set -euo pipefail
 
 export HOME=/home/crm
 export DOCKER_CONFIG=/home/crm/.docker
 ROOT="/home/crm/personal-crm"
 cd "$ROOT"
+
+kind="${BACKUP_KIND:-deploy}"
+case "$kind" in
+  deploy|daily) ;;
+  *)
+    echo "BACKUP_KIND must be deploy or daily" >&2
+    exit 1
+    ;;
+esac
+
+exec 8>"$ROOT/deploy/.backup.lock"
+if ! flock -w 7200 8; then
+  echo "Another database backup is still running" >&2
+  exit 1
+fi
 
 if [[ ! -f "$ROOT/.env" ]]; then
   echo "Missing $ROOT/.env" >&2
@@ -21,7 +38,8 @@ fi
 
 # shellcheck source=lib.sh
 source "$ROOT/deploy/lib.sh"
-COMPOSE=(docker compose -p prod -f "$ROOT/deploy/compose.yml" --env-file "$ROOT/.env")
+configure_runtime prod
+COMPOSE=(docker compose -p prod -f "$ROOT/deploy/compose.yml" --env-file "$ENV_FILE")
 
 db="$(read_env POSTGRES_DB)"
 user="$(read_env POSTGRES_USER)"
@@ -34,7 +52,7 @@ dir="$ROOT/backups"
 umask 077
 mkdir -p "$dir"
 chmod 700 "$dir"
-outfile="$dir/${version}_${stamp}.dump"
+outfile="$dir/${kind}_${version}_${stamp}.dump"
 if [[ -e "$outfile" ]]; then
   echo "Backup already exists: $outfile" >&2
   exit 1
@@ -61,4 +79,15 @@ fi
 chmod 600 "$partial"
 mv "$partial" "$outfile"
 trap - EXIT
+
+mapfile -t backups < <(find "$dir" -maxdepth 1 -type f -name "${kind}_*.dump" -printf '%T@ %p\n' | sort -nr | awk '{print $2}')
+index=0
+for file in "${backups[@]}"; do
+  index=$((index + 1))
+  if [[ "$index" -gt 7 ]]; then
+    rm -f "$file"
+    echo "Removed old backup: $file"
+  fi
+done
+
 echo "Backup written: $outfile"
