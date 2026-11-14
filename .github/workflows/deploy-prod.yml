@@ -1,0 +1,71 @@
+name: Deploy prod
+
+on:
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: "SHA. Пусто — последний зелёный тест-стенд. При откате не смотрим."
+        required: false
+        type: string
+      rollback:
+        description: "Откатить прод на предыдущую версию"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  actions: read
+  packages: write
+
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Choose image
+        id: plan
+        env:
+          ROLLBACK: ${{ inputs.rollback }}
+          REQUESTED_SHA: ${{ inputs.sha }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: bash deploy/plan-prod-release.sh
+
+      - name: Copy scripts and release
+        env:
+          APP_IMAGE: ${{ steps.plan.outputs.image }}
+          APP_ENV: prod
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash deploy/ci-release.sh
+
+      - name: Write summary
+        run: |
+          {
+            echo "### Прод"
+            echo "Режим: ${{ steps.plan.outputs.mode }}"
+            echo "SHA: ${{ steps.plan.outputs.sha }}"
+            echo "Образ: ${{ steps.plan.outputs.image }}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  cleanup-registry:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Keep the 10 newest images in GHCR
+        uses: actions/delete-package-versions@v5
+        with:
+          package-name: personal-crm
+          package-type: container
+          min-versions-to-keep: 10

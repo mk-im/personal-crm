@@ -1,50 +1,52 @@
-name: prod
-
+# Shared by prod and staging. release.sh exports APP_ENV, ports, memory and the volume name.
+# The prod volume name stays prod_prod_postgres so an existing database is not replaced.
 services:
   postgres:
     image: postgres:18
-    restart: unless-stopped
-    env_file: /home/crm/personal-crm/.env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
-      - prod_postgres:/var/lib/postgresql
+      - postgres_data:/var/lib/postgresql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
-      retries: 20
-    logging:
-      driver: journald
-    networks:
-      - internal
+      retries: 10
+    restart: unless-stopped
+    mem_limit: ${POSTGRES_MEMORY}
 
   migrate:
     image: ${APP_IMAGE}
-    env_file: /home/crm/personal-crm/.env
-    command: ["./node_modules/.bin/tsx", "src/db/migrate.ts"]
+    env_file: ${ENV_FILE}
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      OWNER_EMAIL: ${OWNER_EMAIL:-}
     depends_on:
       postgres:
         condition: service_healthy
+    restart: "no"
     logging:
       driver: journald
-    networks:
-      - internal
+    mem_limit: 256m
+    entrypoint: ["./node_modules/.bin/drizzle-kit", "migrate"]
 
   app:
     image: ${APP_IMAGE}
-    restart: unless-stopped
-    env_file: /home/crm/personal-crm/.env
+    env_file: ${ENV_FILE}
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
     ports:
-      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:${APP_PORT}:3000"
     depends_on:
       postgres:
         condition: service_healthy
+    restart: unless-stopped
     logging:
       driver: journald
-    networks:
-      - internal
+    mem_limit: ${APP_MEMORY}
 
 volumes:
-  prod_postgres:
-
-networks:
-  internal:
+  postgres_data:
+    name: ${POSTGRES_VOLUME}
