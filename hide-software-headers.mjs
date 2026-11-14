@@ -1,4 +1,4 @@
-const { ServerResponse } = require("node:http");
+import { ServerResponse } from "node:http";
 
 const hidden = new Set([
   "x-powered-by",
@@ -89,9 +89,9 @@ if (typeof ServerResponse.prototype.appendHeader === "function") {
 }
 
 const writeHead = ServerResponse.prototype.writeHead;
-ServerResponse.prototype.writeHead = function (statusCode, statusMessage, headers) {
+ServerResponse.prototype.writeHead = function (...args) {
   dropHidden(this);
-  dropFromObject(statusMessage);
-  dropFromObject(headers);
-  return writeHead.apply(this, arguments);
+  dropFromObject(args[1]);
+  dropFromObject(args[2]);
+  return writeHead.apply(this, args);
 };
