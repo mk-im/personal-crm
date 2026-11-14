@@ -13,10 +13,7 @@ services:
       timeout: 5s
       retries: 20
     logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
+      driver: journald
     networks:
       - internal
 
@@ -27,6 +24,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    logging:
+      driver: journald
     networks:
       - internal
 
@@ -40,10 +39,7 @@ services:
       postgres:
         condition: service_healthy
     logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
+      driver: journald
     networks:
       - internal
 
