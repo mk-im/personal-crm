@@ -32,6 +32,7 @@ jobs:
       - name: Choose image
         id: plan
         env:
+          GH_TOKEN: ${{ github.token }}
           ROLLBACK: ${{ inputs.rollback }}
           REQUESTED_SHA: ${{ inputs.sha }}
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
