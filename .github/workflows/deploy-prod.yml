@@ -64,9 +64,12 @@ jobs:
     needs: deploy
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      # One build is a tagged index plus untagged child manifests. Counting
+      # every manifest as a version deletes the pieces a tag still needs.
       - name: Keep the 10 newest images in GHCR
-        uses: actions/delete-package-versions@v5
-        with:
-          package-name: personal-crm
-          package-type: container
-          min-versions-to-keep: 10
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash deploy/prune-registry.sh

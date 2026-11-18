@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Nightly prod backup. The server clock is Moscow time; this still checks
-# the Moscow hour so a changed server timezone does not take a backup at
-# the wrong time.
+# Nightly prod backup. Cron starts this every hour. The backup runs only when
+# it is 03:00 in Moscow, so the server timezone does not matter. A stamp file
+# stops a second backup on the same Moscow day.
 set -euo pipefail
 
 hour="$(TZ=Europe/Moscow date +%H)"
